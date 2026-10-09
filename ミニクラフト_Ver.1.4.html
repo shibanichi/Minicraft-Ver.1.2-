@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ミニクラフト</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#87ceeb;font-family:system-ui,sans-serif}
+canvas{display:block;width:100%;height:100%}
+#cross{position:fixed;left:50%;top:50%;width:18px;height:18px;margin:-9px;pointer-events:none}
+#cross:before,#cross:after{content:"";position:absolute;background:#fff;mix-blend-mode:difference}
+#cross:before{left:8px;top:0;width:2px;height:18px}#cross:after{top:8px;left:0;height:2px;width:18px}
+#bar{flex-wrap:nowrap;position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:4px}
+.s{width:min(44px,9.5vw);height:min(44px,9.5vw);flex:none;border:3px solid #333;background:rgba(0,0,0,.4);box-sizing:border-box;position:relative}
+.s.on{border-color:#fff}.s i{position:absolute;inset:6px}.s b{position:absolute;left:2px;top:0;font-size:10px;color:#fff}
+#msg{position:fixed;z-index:1000;pointer-events:auto;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#fff;text-align:center;line-height:1.8;cursor:pointer}
+#msg h1{margin:0 0 8px;font-size:34px}
+#startBtn{font-size:20px;font-weight:700;padding:12px 34px;margin-top:14px;border:3px solid #555;border-radius:5px;background:#e8e8e8;color:#222;box-shadow:0 4px 0 #555;cursor:pointer}#startBtn:hover{background:#fff}#startBtn:active{transform:translateY(3px);box-shadow:0 1px 0 #555}
+#inv{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:50}
+.box{background:#9b9b9b;border:4px solid #555;border-radius:4px;padding:10px 12px 14px;width:min(760px,78vw);height:min(720px,78vh);box-sizing:border-box;color:#222;text-align:left;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 30px #0008}
+.box h2{margin:0 0 8px;font-size:18px;text-align:center}.hint{font-size:12px;margin-top:6px}#nm{margin-top:8px;font-weight:bold}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:4px;overflow-y:auto;padding:5px;flex:1;min-height:0;background:#777}
+.it{aspect-ratio:1;background:#8b8b8b;border:2px solid #555;box-sizing:border-box;position:relative;cursor:pointer}
+.it:hover{border-color:#fff}.invTabs{display:flex;gap:3px;flex-wrap:wrap;margin:2px 0 7px}.invTabs button{font-size:11px;padding:5px 7px}.invTabs button.on{background:#444;color:#fff}.invScroll{overflow:auto;flex:1;min-height:0}.invSection{display:none}.invSection.on{display:block}.invTitle{font-weight:700;margin:4px 0}.equipPanel{background:#aaa;border:2px solid #666;padding:7px;margin-bottom:7px}.craft2{display:grid;grid-template-columns:repeat(2,48px);gap:4px;margin:8px 0}.craft2 .slot{width:48px;height:48px;background:#777;border:2px solid #555;position:relative;cursor:pointer;box-sizing:border-box}.craftOut{display:flex;align-items:center;gap:8px}.craftOut .slot{width:54px;height:54px;background:#777;border:2px solid #555;cursor:pointer}.craftRecipes{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.craftRecipes button{font-size:11px}.catGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:4px;max-height:100%;overflow:auto}.catGrid .it{min-width:0}.it i{position:absolute;inset:5px}.s{cursor:pointer}.playerInvGrid{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin:4px 0 9px}.playerInvGrid .slot{height:48px;background:#777;border:2px solid #555;box-sizing:border-box;position:relative;cursor:pointer}.inventoryHotbar{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin:3px 0 10px}.inventoryHotbar .slot{height:48px;background:#555;border:3px solid #333;box-sizing:border-box;position:relative;cursor:pointer}.inventoryHotbar .slot.selected{border-color:#fff}.inventoryHotbar .slot b{position:absolute;left:2px;top:0;color:#fff;font-size:10px;z-index:2}.playerInvGrid .slot i,.inventoryHotbar .slot i{position:absolute;inset:5px}
+#bar{z-index:10}
+#hud{position:fixed;left:8px;top:calc(8px + env(safe-area-inset-top,0px));color:#fff;font:12px/1.5 monospace;text-shadow:1px 1px #000;pointer-events:none}
+#uwOverlay{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:3;background:radial-gradient(ellipse at center,rgba(90,170,245,.22) 0%,rgba(40,120,225,.36) 100%)}
+#toast{position:fixed;top:14%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:8px 16px;border-radius:6px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20}
+button{font-size:13px;padding:6px 10px;cursor:pointer}
+#craft button{font-size:11px;padding:4px 6px}.tabs{display:flex;gap:3px;flex-wrap:wrap;margin:5px 0}.tabs button{font-size:11px;padding:5px 7px}.tabs button.on{background:#555;color:#fff}.craftlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:4px;max-height:32vh;overflow:auto}.craftlist button{text-align:left}.foodhint{font-size:11px;color:#333;margin:4px}#hp{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom,0px) + min(44px,9.5vw));color:#e33;font-size:15px;text-shadow:1px 1px #000;pointer-events:none;z-index:10;white-space:nowrap}
+.s u,.it u{position:absolute;right:1px;bottom:0;font:700 10px/1 sans-serif;color:#fff;text-shadow:1px 1px #000;text-decoration:none}
+#pauseMenu{position:fixed;inset:0;background:rgba(0,0,0,.58);display:none;align-items:center;justify-content:center;z-index:60}.pauseBox{width:min(420px,78vw);background:#777;border:4px solid #333;border-radius:5px;box-shadow:0 10px 35px #000b;padding:22px;text-align:center;color:#fff;box-sizing:border-box}.pauseBox h2{margin:0 0 14px;font-size:24px;text-shadow:2px 2px #222}.pauseSave{font-size:13px;margin-bottom:18px;color:#eee}.pauseBox button{display:block;width:100%;margin:9px 0;padding:10px 12px;border:2px solid #333;background:#aaa;color:#111;font-weight:700;cursor:pointer}.pauseBox button:hover{background:#ccc}
+#chestUI{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:55}
+.chGrid{display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-bottom:8px}.chGrid .it{min-width:0}
+</style></head><body>
+<canvas id="c"></canvas><div id="cross"></div><div id="bar"></div>
+<div id="inv"><div class="box"><h2>インベントリ</h2><div id="invTabs" class="invTabs"></div><div id="invBody" class="invScroll"></div><div class="hint">Eで閉じる　｜　アイテム/ブロックをクリックすると使用・装備・ホットバー登録　｜　数字キーでホットバー選択</div></div></div><div id="chestUI"><div class="box"><h2>チェスト</h2><div id="chestBody" class="invScroll"></div><div class="hint">クリック:スタックごと移動　右クリック:1個ずつ移動　E / Esc:閉じる</div></div></div><div id="pauseMenu" aria-hidden="true"><div class="pauseBox"><h2>ゲームメニュー</h2><div class="pauseSave">Escを押したのでワールドをセーブしました</div><button id="resumeBtn" type="button">ゲームに戻る</button><button id="resetWorldBtn" type="button">ワールドを初期化</button></div></div>
+<div id="uwOverlay"></div><div id="hud"></div><div id="hp"></div><div id="toast"></div>
+<div id="msg"><h1>ミニクラフト</h1><div>16000×16000の無限風ワールド</div><button id="startBtn" type="button">ゲームスタート</button><div id="saveInfo" style="margin-top:12px;max-width:min(760px,82vw);max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:8px 12px;border-radius:6px;font-size:12px;text-align:left"></div><div style="margin-top:14px">W:前進　A:左　S:後退　D:右　W+R:ダッシュ　Space:ジャンプ　Spaceダブルタップ:飛行<br>Shift:しゃがむ（飛行中:下降）　E:インベントリ　Q:アイテムを落とす　P:セーブ<br>左クリック:攻撃/ブロック破壊　右クリック:ブロック設置　1〜9:ホットバー　マウス移動:視点<br>しゃがみ中はブロックの端から落ちません　（ポインターロック不可の環境ではドラッグで視点）</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// テクスチャは外部ファイルを参照せず、このHTML内のコードから生成されます。
+if(typeof THREE==='undefined'){document.getElementById('msg').innerHTML='<h1>ミニクラフトを起動できません</h1><div style="max-width:600px;padding:12px">Three.jsの読み込みに失敗しました。インターネット接続を確認し、ページを再読み込みしてください。</div>';throw new Error('Three.js failed to load')}
+let brightMul=1,sprintAmt=0;
+const H=80,SL=30,LIM=500,RD=innerWidth<820?3:3,WA=24,LA=25;
+const idx=(x,y,z)=>x+16*(z+16*y);
+function hs(x,z){let n=Math.sin(x*127.1+z*311.7)*43758.5453;return n-Math.floor(n)}
+function vn(x,z){const xi=Math.floor(x),zi=Math.floor(z),fx=x-xi,fz=z-zi,u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz);
+return (hs(xi,zi)*(1-u)+hs(xi+1,zi)*u)*(1-v)+(hs(xi,zi+1)*(1-u)+hs(xi+1,zi+1)*u)*v}
+function h3(i,j,k){let n=Math.imul(i,374761393)+Math.imul(j,668265263)+Math.imul(k,1274126177)|0;n=Math.imul(n^(n>>>13),1274126177);n^=n>>>16;return (n>>>0)/4294967296}
+function vn3(x,y,z){const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z),fx=x-xi,fy=y-yi,fz=z-zi,u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy),q=fz*fz*(3-2*fz),l=(a,b,t)=>a+(b-a)*t;
+return l(l(l(h3(xi,yi,zi),h3(xi+1,yi,zi),u),l(h3(xi,yi+1,zi),h3(xi+1,yi+1,zi),u),v),l(l(h3(xi,yi,zi+1),h3(xi+1,yi,zi+1),u),l(h3(xi,yi+1,zi+1),h3(xi+1,yi+1,zi+1),u),v),q)}
+const F=[[[1,0,0],[[1,0,0],[1,1,0],[1,1,1],[1,0,1]],.8],[[-1,0,0],[[0,0,1],[0,1,1],[0,1,0],[0,0,0]],.8],
+[[0,1,0],[[0,1,0],[0,1,1],[1,1,1],[1,1,0]],1],[[0,-1,0],[[0,0,1],[0,0,0],[1,0,0],[1,0,1]],.5],
+[[0,0,1],[[1,0,1],[1,1,1],[0,1,1],[0,0,1]],.7],[[0,0,-1],[[0,0,0],[0,1,0],[1,1,0],[1,0,0]],.65]];
+const BT=[null,[0,1,2],[2,2,2],[3,3,3],[5,4,5],[6,6,6],[7,7,7],[8,8,8],[9,9,9],[10,10,10]];for(let t=11;t<=26;t++)BT.push([t,t,t]);
+const TR=new Set([17]);const PL=[1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,23];
+const hot=PL.slice(0,9);let sel=0,inv=false,flying=false,lastSp=0,hp=20;
+
+// ---- 追加ブロック定義 (データ駆動) ----
+const TS=[],NMS={},S=(p,c,o)=>[p,c,o];
+function B(n,a,b,c){const t=q=>27+TS.push(q)-1,ta=t(a),tb=b?t(b):ta,tc=c?t(c):ta;const id=BT.length;BT.push([ta,tb,tc]);NMS[id]=n;PL.push(id);return id}
+[['安山岩',[136,136,136]],['閃緑岩',[188,188,188]],['花こう岩',[153,114,99]]].forEach(([n,c])=>{B(n,S('st',c));B('磨かれた'+n,S('tl',c))});
+B('深層岩',S('st',[80,80,85]));B('深層岩の丸石',S('st',[70,70,75],.35));B('磨かれた深層岩',S('tl',[75,75,80]));B('深層岩レンガ',S('br',[72,72,77],[40,40,45]));
+B('凝灰岩',S('st',[108,109,102]));B('方解石',S('n',[223,224,220],.05));B('鍾乳石',S('n',[134,107,92]));B('滑らかな玄武岩',S('sm',[72,72,78]));
+B('ブラックストーン',S('st',[42,36,41]));B('磨かれたブラックストーン',S('tl',[53,48,56]));B('磨かれたブラックストーンレンガ',S('br',[48,43,50],[28,25,30]));
+B('ネザーラック',S('n',[111,54,53],.35));B('ソウルサンド',S('n',[81,62,50]));B('ネザーレンガ',S('br',[44,21,26],[25,12,15]));B('赤いネザーレンガ',S('br',[69,7,9],[40,4,6]));
+B('クォーツブロック',S('sm',[236,230,223]));B('マグマブロック',S('mg',[140,60,20]));B('ネザーウォートブロック',S('n',[114,3,2]));B('歪んだウォートブロック',S('n',[22,119,121]));
+B('真紅の板材',S('pk',[101,48,70]));B('歪んだ板材',S('pk',[43,104,99]));
+B('真紅の幹',S('lt',[121,56,82],[92,25,29]),S('lg',[92,25,29]));B('歪んだ幹',S('lt',[58,142,140],[35,90,90]),S('lg',[35,90,90]));
+B('エンドストーン',S('n',[219,222,158],.1));B('エンドストーンレンガ',S('br',[218,224,162],[190,196,135]));B('プルプァブロック',S('tl',[169,125,169]));B('泣く黒曜石',S('n',[35,10,70],.5));
+B('赤い砂',S('n',[190,102,33],.1));B('赤い砂岩',S('bd',[186,99,29]));B('滑らかな砂岩',S('sm',[224,214,164]));B('きめ細かい砂岩',S('tl',[225,214,166]));B('滑らかな赤い砂岩',S('sm',[181,97,31]));
+B('粘土',S('n',[160,166,179],.06));B('泥',S('n',[60,57,61]));B('泥レンガ',S('br',[137,104,79],[100,75,55]));B('固めた泥',S('n',[142,106,79]));
+B('苔ブロック',S('n',[89,109,45],.3));B('雪ブロック',S('n',[249,254,254],.03));B('氷',S('sm',[145,183,253]));B('氷塊',S('n',[141,180,250],.1));B('青氷',S('sm',[116,167,253]));
+B('ポドゾル',S('n',[91,63,24]),S('gs',[91,63,24]),S('n',[134,96,67],.35));B('菌糸',S('n',[111,98,101]),S('gs',[111,98,101]),S('n',[134,96,67],.35));
+B('粗い土',S('n',[119,85,59],.4));B('根付いた土',S('n',[144,103,76],.3));
+B('苔むした石レンガ',S('br',[115,121,105],[90,100,80]));B('ひび割れた石レンガ',S('br',[118,118,118],[70,70,70]));B('模様入り石レンガ',S('tl',[119,119,119]));B('苔むした丸石',S('st',[100,120,90]));
+B('プリズマリン',S('n',[99,171,158]));B('プリズマリンレンガ',S('br',[99,171,158],[70,130,120]));B('ダークプリズマリン',S('n',[51,91,75]));B('シーランタン',S('tl',[172,199,190]));
+[['鉄',[220,220,220]],['金',[249,236,78]],['ダイヤモンド',[98,237,228]],['エメラルド',[42,203,87]],['ネザライト',[66,61,63]],['銅',[192,107,79]],['風化した銅',[161,125,103]],['錆びた銅',[108,153,110]],['酸化した銅',[82,162,132]]].forEach(([n,c])=>B(n+'ブロック',S('tl',c)));
+B('切り込み入り銅',S('tl',[192,107,79]));
+[['ラピスラズリ',[31,67,140]],['レッドストーン',[171,27,9]],['石炭',[16,15,15]],['アメジスト',[133,97,191]],['鉄の原石',[166,135,107]],['金の原石',[221,169,46]],['銅の原石',[154,105,79]]].forEach(([n,c])=>B(n+'ブロック',S('n',c,.25)));
+[['ラピスラズリ',[31,67,140]],['レッドストーン',[200,30,20]],['エメラルド',[40,200,80]],['銅',[200,110,80]]].forEach(([n,c])=>B(n+'鉱石',S('ob',c,[125,125,125])));
+[['石炭',[25,25,25]],['鉄',[216,175,147]],['金',[250,220,60]],['ダイヤモンド',[90,230,220]],['レッドストーン',[200,30,20]],['ラピスラズリ',[31,67,140]],['エメラルド',[40,200,80]],['銅',[200,110,80]]].forEach(([n,c])=>B('深層岩の'+n+'鉱石',S('ob',c,[80,80,85])));
+B('ネザーの金鉱石',S('ob',[250,220,60],[111,54,53]));B('ネザークォーツ鉱石',S('ob',[235,230,220],[111,54,53]));B('古代の残骸',S('tl',[94,66,58]));
+[['トウヒ',[114,84,48],[58,37,16],[58,95,58]],['シラカバ',[192,175,121],[215,215,210],[128,167,85]],['ジャングル',[160,115,80],[85,67,25],[48,130,20]],['アカシア',[168,90,50],[103,96,86],[100,140,40]],
+['ダークオーク',[66,43,20],[60,46,26],[40,90,20]],['マングローブ',[117,54,48],[84,56,50],[60,110,40]],['サクラ',[226,178,172],[56,35,45],[229,171,201]]].forEach(([n,p,b,l])=>{
+ B(n+'の板材',S('pk',p));B(n+'の原木',S('lt',p,b),S('lg',b));B(n+'の葉',S('lf',l))});
+B('竹の板材',S('pk',[193,173,80]));B('竹ブロック',S('lt',[193,173,80],[135,145,50]),S('lg',[135,145,50]));
+const DY=[['白',[233,236,236]],['橙',[240,118,19]],['赤紫',[189,68,179]],['空色',[58,175,217]],['黄',[248,198,39]],['黄緑',[112,185,25]],['桃',[237,141,172]],['灰',[62,68,71]],['薄灰',[142,142,134]],['青緑',[21,137,145]],['紫',[121,42,172]],['青',[53,57,157]],['茶',[114,71,40]],['緑',[84,109,27]],['赤',[161,39,34]],['黒',[20,21,25]]];
+DY.forEach(([n,c])=>B(n+'色の羊毛',S('wl',c)));
+DY.forEach(([n,c])=>B(n+'色のコンクリート',S('sm',c)));
+B('テラコッタ',S('n',[152,94,67],.06));DY.forEach(([n,c])=>B(n+'色のテラコッタ',S('n',c.map(v=>v*.62+25|0),.06)));
+DY.forEach(([n,c])=>TR.add(B(n+'色の色付きガラス',S('gl',c))));
+B('本棚',S('pk',[162,130,78]),S('bks'));B('TNT',S('n',[190,190,190],.1),S('tnt'));B('カボチャ',S('n',[200,110,20],.1),S('pum',[205,120,25]));B('スイカ',S('n',[110,150,50],.1),S('mel',[100,150,50]));
+B('干し草の俵',S('n',[200,170,40],.1),S('hay',[205,175,50]));B('作業台',S('crt',[162,130,78]),S('crt',[150,120,70]));B('かまど',S('st',[125,125,125]),S('fur',[125,125,125]));
+B('スポンジ',S('spg',[196,194,76]));B('骨ブロック',S('bd',[229,225,207]));B('スライムブロック',S('n',[111,192,92],.1));B('ハチミツブロック',S('sm',[251,185,52]));
+B('サボテン',S('n',[86,127,52],.3));B('シュルームライト',S('gw',[240,144,70]));B('グロウストーン',S('gw',[245,225,145]));const RED_LAMP=B('レッドストーンランプ',S('lamp'));
+// レッドストーン回路ブロック（本家に準じた形状・テクスチャ）
+const RED_DUST=B('レッドストーンダスト',S('rdust',[160,12,8]));
+const RED_TORCH=B('レッドストーントーチ',S('rtorch'));
+const REPEATER=B('リピーター',S('rrep'));
+const LEVER=B('レバー',S('cb',[125,125,125]));
+const STONE_BUTTON=B('石のボタン',S('st',[125,125,125]));
+const PRESSURE=B('石の感圧板',S('st',[125,125,125]));
+const PISTON=B('ピストン',S('pistT',[165,138,80]),S('pistS',[165,138,80]),S('pistB'));
+const STICKY_PISTON=B('粘着ピストン',S('pistT',[124,196,106]),S('pistS',[165,138,80]),S('pistB'));
+const OBSERVER=B('オブザーバー',S('obsT'),S('obsF'),S('st',[105,105,105]));
+const DISPENSER=B('ディスペンサー',S('cb',[125,125,125]),S('dispF',[125,125,125],0),S('cb',[125,125,125]));
+const COMPARATOR=B('コンパレーター',S('rcmp'));
+const DROPPER=B('ドロッパー',S('cb',[125,125,125]),S('dispF',[125,125,125],1),S('cb',[125,125,125]));
+const HOPPER=B('ホッパー',S('hopT'),S('hopO'),S('hopO'));
+const TARGET=B('ターゲット',S('tgt'));
+const RAIL=B('レール',S('rail',[0,0,0],0));
+const POWERED_RAIL=B('パワードレール',S('rail',[0,0,0],1));
+const DETECTOR_RAIL=B('検知レール',S('rail',[0,0,0],2));
+const ACTIVATOR_RAIL=B('アクティベーターレール',S('rail',[0,0,0],3));
+const MINECART_BLOCK=B('トロッコ',S('bd',[95,95,95]));
+const CHEST=B('チェスト',S('chT'),S('chS'),S('chB'));
+TS.push(S('chF'));BT[CHEST][3]=27+TS.length-1;
+TS.push(S('stick'));BT[LEVER][3]=27+TS.length-1;
+const ALT=(id,sp)=>{TS.push(sp);BT[id][3]=27+TS.length-1};
+ALT(RED_LAMP,S('lampOn'));ALT(REPEATER,S('rrepOn'));ALT(COMPARATOR,S('rcmp2'));ALT(OBSERVER,S('obsB'));ALT(PISTON,S('pistP'));ALT(STICKY_PISTON,S('pistP'));
+const PHEAD=B('ピストンヘッド',S('pistT',[165,138,80]),S('pk',[165,138,80]),S('pk',[130,105,60]));PL.pop();ALT(PHEAD,S('pistT',[124,196,106]));
+const WF=BT.length;BT.push([25,25,25]);NMS[WF]='流れる水';const LF=BT.length;BT.push([26,26,26]);NMS[LF]='流れる溶岩';
+const WSPG=B('湿ったスポンジ',S('spgW',[150,150,62]));PL.pop();
+const FL=new Uint8Array(256);FL[WA]=FL[WF]=1;FL[LA]=FL[LF]=2;const isW=v=>FL[v&255]===1,isL=v=>FL[v&255]===2;
+// 薄い/小さいブロック（THIN）。NC=当たり判定なし（歩いて通れる）
+const THIN=new Uint8Array(256),NC=new Uint8Array(256);
+[[RED_DUST,1],[RED_TORCH,2],[REPEATER,3],[COMPARATOR,3],[LEVER,4],[STONE_BUTTON,5],[PRESSURE,6],[RAIL,7],[POWERED_RAIL,7],[DETECTOR_RAIL,7],[ACTIVATOR_RAIL,7],[HOPPER,8]].forEach(([id,t])=>{THIN[id]=t;if(t!==8)NC[id]=1});
+const THINB={1:[[0,0,0,1,.0625,1]],2:[[.4375,0,.4375,.5625,.625,.5625]],3:[[0,0,0,1,.125,1]],5:[[.3125,0,.375,.6875,.125,.625]],6:[[.0625,0,.0625,.9375,.0625,.9375]],7:[[0,0,0,1,.0625,1]],
+ 8:[[0,.625,0,1,1,1],[.25,.25,.25,.75,.625,.75],[.375,0,.375,.625,.25,.625]]},
+ LEVOFF=[[.3125,0,.25,.6875,.1875,.75],[.4375,.1875,.1875,.5625,.625,.3125,1]],LEVON=[[.3125,0,.25,.6875,.1875,.75],[.4375,.1875,.6875,.5625,.625,.8125,1]],CHESTB=[[.0625,0,.0625,.9375,.875,.9375]];
+
+const OLDN={3:'石',7:'オークの板材',8:'丸石',9:'レンガ',16:'砂岩',23:'石レンガ'},nmid=n=>+Object.keys(NMS).find(k=>NMS[k]==n),bn=id=>NMS[id]||OLDN[id];
+TS[BT[nmid('レッドストーンブロック')][0]-27]=S('rsb',[171,27,9]);
+const TNTB=nmid('TNT'),RBLK=nmid('レッドストーンブロック'),SPG=nmid('スポンジ');
+const RSB=new Set([RED_DUST,RED_TORCH,REPEATER,COMPARATOR,LEVER,STONE_BUTTON,PRESSURE,PISTON,STICKY_PISTON,PHEAD,OBSERVER,DISPENSER,DROPPER,HOPPER,RED_LAMP,TARGET,TNTB,RBLK]);
+const RSF=new Uint8Array(256);[RED_LAMP,OBSERVER,DISPENSER,DROPPER,PISTON,STICKY_PISTON,PHEAD].forEach(id=>RSF[id]=1);
+const FULLO=new Set([RED_LAMP,OBSERVER,DISPENSER,DROPPER]),CONTB=new Map([[CHEST,27],[HOPPER,5],[DISPENSER,9],[DROPPER,9]]);
+const shL=q=>q<9?'階':q<11?'半':q==11?'柵':q==12?'塀':'扉';
+const SM=[7,3,8,9,16,23,...['安山岩','閃緑岩','花こう岩','深層岩の丸石','深層岩レンガ','ブラックストーン','ネザーレンガ','エンドストーンレンガ','クォーツブロック','赤い砂岩','プリズマリンレンガ','泥レンガ','苔むした丸石','苔むした石レンガ','トウヒの板材','シラカバの板材','ジャングルの板材','アカシアの板材','ダークオークの板材','マングローブの板材','サクラの板材','竹の板材','真紅の板材','歪んだ板材','切り込み入り銅'].map(nmid)];
+const addV=(v,n)=>{PL.push(v);NMS[v]=n};
+SM.forEach(id=>{addV(id|256,bn(id)+'の階段');addV(id|(9<<8),bn(id)+'のハーフブロック')});
+const WD=[7,...['トウヒ','シラカバ','ジャングル','アカシア','ダークオーク','マングローブ','サクラ'].map(n=>nmid(n+'の板材')),nmid('竹の板材'),nmid('真紅の板材'),nmid('歪んだ板材')];
+WD.forEach(id=>addV(id|(11<<8),bn(id).replace('の板材','')+'のフェンス'));
+[8,23,9,16,...['安山岩','閃緑岩','花こう岩','深層岩の丸石','深層岩レンガ','磨かれたブラックストーンレンガ','ネザーレンガ','エンドストーンレンガ','プリズマリンレンガ','泥レンガ','苔むした丸石','苔むした石レンガ','赤い砂岩'].map(nmid)].forEach(id=>addV(id|(12<<8),bn(id)+'の塀'));
+[['オーク',[162,130,78]],['トウヒ',[114,84,48]],['シラカバ',[192,175,121]],['ジャングル',[160,115,80]],['アカシア',[168,90,50]],['ダークオーク',[66,43,20]],['マングローブ',[117,54,48]],['サクラ',[226,178,172]],['竹',[193,173,80]],['真紅',[101,48,70]],['歪んだ',[43,104,99]],['鉄',[200,200,200]]].forEach(([n,c])=>{const id=B(n+'のトラップドア',S('td',c));PL.pop();addV(id|(13<<8),n+'のトラップドア')});
+const NT=27+TS.length;
+const N=NT,CO=16,RW=Math.ceil(N/CO),ac=document.createElement('canvas');ac.width=16*CO;ac.height=16*RW;
+const actx=ac.getContext('2d'),im=actx.createImageData(16*CO,16*RW);
+// ---- テクスチャ生成（16x16・タイル可能・バニラ風ピクセルアート） ----
+const hh=(a,b,s)=>{let n=Math.imul(a+1013,374761393)^Math.imul(b+7919,668265263)^Math.imul(s+101,1274126177);n=Math.imul(n^(n>>>13),1103515245);return((n^(n>>>16))>>>0)/4294967296};
+const wr=(v,p)=>((v%p)+p)%p,fn=(k,x,y)=>hh(x,y,k);
+function tn(s,x,y,cs){const g=16/cs,fx=x/cs,fy=y/cs,xi=Math.floor(fx),yi=Math.floor(fy),u=fx-xi,v=fy-yi,a=u*u*(3-2*u),b=v*v*(3-2*v),l=(i,j)=>hh(wr(xi+i,g),wr(yi+j,g),s);
+ return(l(0,0)*(1-a)+l(1,0)*a)*(1-b)+(l(0,1)*(1-a)+l(1,1)*a)*b}
+function vor(s,x,y,cs){const g=16/cs,cx=Math.floor(x/cs),cy=Math.floor(y/cs);let d1=9e9,d2=9e9,id=0;
+ for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const gx=cx+i,gy=cy+j,wx=wr(gx,g),wy=wr(gy,g),
+  d=Math.hypot(x+.5-(gx+hh(wx,wy,s))*cs,y+.5-(gy+hh(wx,wy,s+7))*cs);
+  if(d<d1){d2=d1;d1=d;id=hh(wx,wy,s+13)}else if(d<d2)d2=d}
+ return{id,e:d2-d1,d:d1}}
+const shd=(c,k)=>c.map(v=>v*k);
+const PAT={
+ n:(c,o,x,y,k)=>shd(c,1+((tn(k,x,y,4)-.5)*.7+(fn(k,x,y)-.5)*1.3)*(o||.15)),
+ sm:(c,o,x,y,k)=>shd(c,1+(tn(k,x,y,8)-.5)*.08+(fn(k,x,y)-.5)*.05),
+ st:(c,o,x,y,k)=>{const v=tn(k,x,y,4)*.45+tn(k+3,x,y,2)*.3+fn(k+5,x,y)*.25,q=fn(k+9,x,y);let m=.86+v*.3*((o||.2)/.2);if(q>.93)m*=1.14;else if(q<.06)m*=.84;return shd(c,m)},
+ gr:(c,o,x,y,k)=>{const v=vor(k,x,y,2);let m=.8+tn(k,x,y,4)*.3+(fn(k,x,y)-.5)*.2;if(v.id>.7)m*=1.12;else if(v.id<.25)m*=.82;return shd(c,m)},
+ dirt:(c,o,x,y,k)=>{const v=vor(k,x,y,4);let m=.85+tn(k,x,y,4)*.2+(fn(k+1,x,y)-.5)*.2;if(v.id>.72&&v.d<1.1)m*=1.18;else if(v.id<.2&&v.d<1.2)m*=.78;return shd(c,m)},
+ gs:(c,o,x,y,k)=>{const f=2+Math.floor(hh(x,0,k)*2.99)+(fn(k+1,x,0)>.7?1:0);return y<f?PAT.n(c,.4,x,y,k+2):PAT.dirt([134,96,67],0,x,y,k+4)},
+ sd:(c,o,x,y,k)=>shd(c,.95+(fn(k,x,y)-.5)*.1+(tn(k,x,y,4)-.5)*.08-(fn(k+1,x,y)>.94?.07:0)),
+ gv:(c,o,x,y,k)=>{const v=vor(k,x,y,4);let m=.7+v.id*.5;if(v.e<.6)m*=.7;return shd(c,m*(.95+fn(k,x,y)*.1))},
+ cb:(c,o,x,y,k)=>{const v=vor(k,x,y,4);let m=.72+v.id*.5;if(v.e<.55)m*=.6;else if(v.e<1)m*=.9;return shd(c,m*(.94+fn(k,x,y)*.12))},
+ bed:(c,o,x,y,k)=>{const v=vor(k,x,y,4);let m=.5+tn(k,x,y,2)*.7;if(v.id>.6)m*=.6;if(fn(k,x,y)>.88)m*=1.35;return shd([85,85,85],m)},
+ ox:(c,o,x,y,k)=>{const q=fn(k,x,y);if(q>.93)return[110,70,170];if(q<.05)return[10,5,20];return shd(c,.7+tn(k,x,y,4)*.5)},
+ wl:(c,o,x,y,k)=>shd(c,(.9+tn(k,x,y,2)*.18)*(((x+y)&1)?1:.93)*(.96+fn(k,x,y)*.08)),
+ gw:(c,o,x,y,k)=>{const v=vor(k,x,y,4);let m=.8+v.id*.4;if(v.e<.7)m*=.75;if(fn(k,x,y)>.85)m*=1.2;return shd(c,m)},
+ sb:(c,o,x,y,k)=>{const row=y>>3,bx=wr(x+(row&1)*8,16);if((y&7)==7||(bx&15)==15)return shd(c,.62);return shd(PAT.st(c,.2,x,y,k),((y&7)==0||(bx&15)==0)?1.1:1)},
+ wt:(c,o,x,y,k)=>{let m=.8+tn(k,x,y,4)*.3+(tn(k+2,x,y,8)>.6?.12:0);if(fn(k,x,y)>.92)m+=.2;return shd(c,m)},
+ lv:(c,o,x,y,k)=>{const v=vor(k,x,y,4),t=tn(k,x,y,4);let col=t>.62?[255,215,70]:t>.4?[250,130,20]:[205,70,10];if(v.e<.6)col=shd(col,.75);return shd(col,.92+fn(k,x,y)*.16)},
+ mg:(c,o,x,y,k)=>{const v=vor(k,x,y,4);return v.e<.8?[255,160+fn(k,x,y)*60,40]:shd([60,22,14],.8+fn(k,x,y)*.5)},
+ br:(c,o,x,y,k)=>{const row=y>>2,bx=wr(x+(row&1)*4,16);if((y&3)==3||(bx&7)==7)return shd(o,.92+fn(k,x,y)*.16);
+  return shd(c,(.88+hh(bx>>3,row,k)*.22+(fn(k+2,x,y)-.5)*.1)*((y&3)?1:1.08))},
+ tl:(c,o,x,y,k)=>{let m=.97+(tn(k,x,y,8)-.5)*.1+(fn(k,x,y)-.5)*.05;if(x==0||y==0)m=1.12;else if(x==15||y==15)m=.82;return shd(c,m)},
+ pk:(c,o,x,y,k)=>{const row=y>>2,ex=Math.floor(hh(row,0,k)*16);if((y&3)==3)return shd(c,.7);if(((x+ex)&15)==0)return shd(c,.76);
+  return shd(c,.9+hh(row,1,k)*.16+(hh(row,(x+ex)>>2,k+2)-.5)*.1+(fn(k,x,y)-.5)*.06+((y&3)==0?.05:0))},
+ lg:(c,o,x,y,k)=>shd(c,.75+hh(x,0,k)*.3+(tn(k,x,y,4)-.5)*.25+(fn(k+1,x,y)-.5)*.1),
+ lt:(c,o,x,y,k)=>{const d=Math.max(Math.abs(x-7.5),Math.abs(y-7.5));if(d>6.5)return PAT.lg(o,0,x,y,k+1);
+  const ring=Math.floor(d+(tn(k,x,y,4)-.5)*1.6);return shd(ring%2?c:shd(c,.8),.96+(fn(k,x,y)-.5)*.1)},
+ lf:(c,o,x,y,k)=>{const v=vor(k,x,y,4);let m=.62+v.id*.55+(tn(k,x,y,2)-.5)*.3;if(v.e<.7)m*=.8;if(fn(k+3,x,y)<.22)m*=.55;return shd(c,m)},
+ ob:(c,o,x,y,k)=>{const v=vor(k+1,x,y,4);
+  if(v.id>.62&&v.d<1.35){let t=v.d<.8?1.12:.95;if(((x+y)%5)<1)t*=1.2;return shd(c,t*(.88+fn(k+4,x,y)*.24))}
+  return PAT.st(o,.28,x,y,k)},
+ gl:(c,o,x,y)=>(x==0||y==0||x==15||y==15||(x==y&&x>2&&x<7)||(x==y-1&&x>2&&x<6)||(x==12&&y==4)||(x==11&&y==5))?c:[0,0,0,0],
+ bd:(c,o,x,y,k)=>shd(c,(((y&7)==0||((y&7)==1&&fn(k,x,y)>.5))?.86:1)*(.94+tn(k,x,y,4)*.1+(fn(k,x,y)-.5)*.06)),
+ bks:(c,o,x,y,k)=>y<2||y>13?PAT.pk([162,130,78],0,x,y,k):y==7||y==8?shd([110,80,40],.9+fn(k,x,y)*.2):shd([[150,40,40],[40,80,150],[60,130,60],[170,140,50],[110,60,140]][((x>>1)+(y>7?3:0))%5],.8+fn(k,x,y)*.35),
+ tnt:(c,o,x,y,k)=>y>=5&&y<=10?(y==5||y==10?shd([60,60,60],.9+fn(k,x,y)*.2):shd([235,235,235],.96+fn(k,x,y)*.06)):shd([200,40,30],.9+fn(k,x,y)*.2),
+ pum:(c,o,x,y,k)=>shd(c,(x%4==0?.82:x%4==1?1.06:.98)*(.95+fn(k,x,y)*.1)),
+ mel:(c,o,x,y,k)=>shd(c,(x%4<2?.78:1)*(.94+fn(k,x,y)*.12)),
+ hay:(c,o,x,y,k)=>shd(c,(y%5==2?.55:.95+(x%3==0?.08:0))*(.94+fn(k,x,y)*.12)),
+ crt:(c,o,x,y,k)=>(x%8==0||y%8==0)?shd([100,70,35],.9+fn(k,x,y)*.2):PAT.pk(c,0,x,y,k),
+ td:(c,o,x,y,k)=>(x<2||x>13||y<2||y>13)?shd(c,.8+fn(k,x,y)*.1):((x+1)%4<2&&(y+1)%4<2)?shd(c,.5):shd(c,.95+fn(k,x,y)*.1),
+ fur:(c,o,x,y,k)=>x>3&&x<12&&y>5&&y<12?shd([40,40,40],.8+fn(k,x,y)*.4):PAT.st(c,.2,x,y,k)};
+const cbase=(k,x,y)=>shd([158,158,158],.9+fn(k,x,y)*.14+(tn(k,x,y,4)-.5)*.12);
+const ctorch=(L,x,y)=>{for(const[tx,ty,on]of L){if(x>=tx&&x<=tx+1&&y>=ty&&y<=ty+1)return on?((x+y)&1?[225,70,55]:[175,28,20]):[105,32,26];if(x>=tx-1&&x<=tx+2&&y>=ty-1&&y<=ty+2)return[80,80,80]}return null};
+Object.assign(PAT,{
+ rdust:(c,o,x,y,k)=>{const cen=x>=6&&x<=9&&y>=6&&y<=9,arm=(x==7||x==8)||(y==7||y==8);if(!cen&&!arm)return[0,0,0,0];return shd(c,(cen?1.1:.85)+(fn(k,x,y)-.5)*.35)},
+ rtorch:(c,o,x,y,k)=>{if(x<7||x>8||y<6)return[0,0,0,0];if(y<8)return(x+y)&1?[255,92,70]:[205,38,28];return x==7?[170,140,85]:[128,100,58]},
+ rrep:(c,o,x,y,k)=>{if(x<1||y<1||x>14||y>14)return shd(cbase(k,x,y),.72);return ctorch([[7,2,0],[7,11,0]],x,y)||(y==7&&x>=3&&x<=12?[95,95,95]:cbase(k,x,y))},
+ rrepOn:(c,o,x,y,k)=>{if(x<1||y<1||x>14||y>14)return shd(cbase(k,x,y),.72);return ctorch([[7,2,1],[7,11,1]],x,y)||(y==7&&x>=3&&x<=12?[95,95,95]:cbase(k,x,y))},
+ rcmp:(c,o,x,y,k)=>{if(x<1||y<1||x>14||y>14)return shd(cbase(k,x,y),.72);return ctorch([[7,11,0],[3,2,0],[11,2,0]],x,y)||cbase(k,x,y)},
+ rcmp2:(c,o,x,y,k)=>{if(x<1||y<1||x>14||y>14)return shd(cbase(k,x,y),.72);return ctorch([[7,11,0],[3,2,1],[11,2,1]],x,y)||cbase(k,x,y)},
+ lampOn:(c,o,x,y,k)=>(x%8==0||y%8==0)?shd([200,140,60],.9+fn(k,x,y)*.2):shd([255,226,140],.9+vor(k,x,y,4).id*.2+(fn(k,x,y)-.5)*.1),
+ obsB:(c,o,x,y,k)=>{const d=Math.hypot(x-7.5,y-7.5);return d<2.2?(d<1.2?[230,50,40]:[150,30,25]):PAT.st([105,105,105],.15,x,y,k)},
+ pistP:(c,o,x,y,k)=>PAT.cb([128,128,128],0,x,y,k),
+ pistT:(c,o,x,y,k)=>{const e=Math.min(x,y,15-x,15-y);if(e==0)return shd(c,.6);if(e==1)return shd(c,.85);return shd(c,.95+fn(k,x,y)*.1+(tn(k,x,y,4)-.5)*.1)},
+ pistS:(c,o,x,y,k)=>y<4?PAT.pk(c,0,x,y,k):y==4?[85,85,85]:PAT.cb([128,128,128],0,x,y,k),
+ pistB:(c,o,x,y,k)=>Math.hypot(x-7.5,y-7.5)<2.2?shd([60,60,60],.8+fn(k,x,y)*.3):PAT.cb([120,120,120],0,x,y,k),
+ obsT:(c,o,x,y,k)=>((Math.abs(x-7.5)<=.5&&y>=6&&y<=12)||(y>=3&&y<=6&&Math.abs(x-7.5)<=(y-3)+.5))?[55,55,55]:PAT.st([105,105,105],.15,x,y,k),
+ obsF:(c,o,x,y,k)=>{if(x<2||y<2||x>13||y>13)return PAT.st([105,105,105],.15,x,y,k);
+  if((x>=4&&x<=6||x>=9&&x<=11)&&y>=5&&y<=7)return[48,48,52];if(y==10&&x>=5&&x<=10)return[48,48,52];return shd([150,150,152],.9+fn(k,x,y)*.15)},
+ dispF:(c,o,x,y,k)=>{const m=o?5:4,M=o?10:11;if(x>=m&&x<=M&&y>=m&&y<=M)return(x==m||x==M||y==m||y==M)?[35,35,35]:shd([62,62,62],.9+fn(k,x,y)*.3);return PAT.cb(c,0,x,y,k)},
+ hopT:(c,o,x,y,k)=>{const e=Math.min(x,y,15-x,15-y);if(e==0)return[55,55,60];if(e<3)return shd([95,95,102],.9+fn(k,x,y)*.2);return Math.hypot(x-7.5,y-7.5)<2.6?[18,18,20]:shd([48,48,54],.9+fn(k,x,y)*.2)},
+ hopO:(c,o,x,y,k)=>shd([72,72,78],(y%8<2?1.3:y%8==7?.7:1)*(.92+fn(k,x,y)*.16)),
+ lamp:(c,o,x,y,k)=>(x%8==0||y%8==0)?shd([70,48,30],.9+fn(k,x,y)*.2):shd([150,108,66],.8+vor(k,x,y,4).id*.35+(fn(k,x,y)-.5)*.1),
+ tgt:(c,o,x,y,k)=>shd(Math.floor(Math.max(Math.abs(x-7.5),Math.abs(y-7.5))/1.7)%2?[238,232,222]:[200,60,50],.93+fn(k,x,y)*.12),
+ rsb:(c,o,x,y,k)=>{const v=vor(k,x,y,4);let m=.78+v.id*.4;if(v.e<.7)m*=.85;return shd(c,m*(.95+fn(k,x,y)*.1))},
+ stick:(c,o,x,y,k)=>shd([143,110,62],.8+hh(x,0,k)*.3+(fn(k,x,y)-.5)*.12),
+ rail:(c,o,x,y,k)=>{const rl=(x>=2&&x<=3)||(x>=12&&x<=13),tie=(y%4==1||y%4==2)&&x>=1&&x<=14,rc=o==1?[205,172,45]:o==3?[110,82,72]:[150,150,155];
+  if(o==2&&x>=5&&x<=10&&y>=5&&y<=10)return(x==5||x==10||y==5||y==10)?[70,70,75]:shd([125,125,130],.9+fn(k,x,y)*.2);
+  if(rl)return shd(rc,.85+fn(k,x,y)*.3);
+  if((o==1||o==3)&&x>=7&&x<=8&&y%4!=0)return o==1?shd([150,25,15],.8+fn(k,x,y)*.4):shd([160,40,30],.8+fn(k,x,y)*.4);
+  if(tie)return shd([121,86,52],.8+hh(x,y>>2,k)*.3+fn(k,x,y)*.15);return[0,0,0,0]},
+ chT:(c,o,x,y,k)=>{const e=Math.min(x-1,y-1,14-x,14-y);if(e<=0)return shd([105,72,34],.9+fn(k,x,y)*.1);return shd([158,112,58],(e==1?.84:1)*(.92+((y%4==0)?-.06:0)+fn(k,x,y)*.1))},
+ chS:(c,o,x,y,k)=>{if(x==1||x==14||y==15)return shd([100,68,32],.9+fn(k,x,y)*.1);if(y==6||y==7)return[85,58,28];return shd([158,112,58],(y<6?1.06:.95)*(.88+fn(k,x,y)*.14+(((y+1)%4==0)?-.05:0)))},
+ chF:(c,o,x,y,k)=>{if(x>=7&&x<=8&&y>=4&&y<=9)return(x==7&&y==8)?[30,28,28]:shd([205,205,210],.82+fn(k,x,y)*.2);return PAT.chS(c,o,x,y,k)},
+ chB:(c,o,x,y,k)=>shd([95,66,32],.85+fn(k,x,y)*.2),
+ spg:(c,o,x,y,k)=>{const v=vor(k,x,y,4);let m=.85+v.id*.3;if(v.d<1.2&&v.id>.4)m*=.38;return shd(c,m*(.92+fn(k,x,y)*.16))},
+ spgW:(c,o,x,y,k)=>{const v=vor(k,x,y,4);let m=.8+v.id*.25;if(v.d<1.2&&v.id>.4)m*=.35;return shd(c,m*(.92+fn(k,x,y)*.16))}});
+const BASE=[['gr',[95,160,60]],['gs',[95,160,60]],['dirt',[134,96,67]],['st',[125,125,125]],['lg',[102,81,50]],['lt',[170,135,85],[102,81,50]],['lf',[60,130,40]],['sd',[219,207,142]],['pk',[162,130,78]],['cb',[125,125,125]],['br',[150,80,65],[190,185,175]],
+['bed'],['ob',[25,25,25],[125,125,125]],['ob',[216,175,147],[125,125,125]],['ob',[250,220,60],[125,125,125]],['ob',[90,230,220],[125,125,125]],['gv',[131,126,124]],['bd',[218,205,150]],['gl',[225,242,248]],['ox',[25,15,40]],
+['wl',[235,235,235]],['wl',[160,45,40]],['wl',[50,60,160]],['gw',[240,200,110]],['sb',[125,125,125]],['wt',[55,100,210]],['lv',[225,95,15]]];
+for(let t=0;t<N;t++){const[p,c,o]=t<27?BASE[t]:TS[t-27];
+ for(let y=0;y<16;y++)for(let x=0;x<16;x++){const q=PAT[p](c,o,x,y,t*7+3),i=((Math.floor(t/CO)*16+y)*16*CO+(t%CO)*16+x)*4;
+  im.data[i]=q[0];im.data[i+1]=q[1];im.data[i+2]=q[2];im.data[i+3]=q[3]===undefined?255:q[3]}}
+actx.putImageData(im,0,0);
+const tex=new THREE.CanvasTexture(ac);tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;
+// ================= 昼夜サイクル：昼10分・夜10分 =================
+const DAY_LENGTH=600, NIGHT_LENGTH=600, TOTAL_CYCLE=DAY_LENGTH+NIGHT_LENGTH;
+let worldClock=0;
+const DAY_BRIGHT=15, NIGHT_BRIGHT=4;
+const daySky=new THREE.Color(0x87ceeb), orangeSky=new THREE.Color(0xff8a32), nightSky=new THREE.Color(0x111827), skyCol=new THREE.Color();
+const scene=new THREE.Scene();scene.background=skyCol;scene.fog=new THREE.Fog(skyCol,35,RD*16-10);
+const cv=document.getElementById('c'),ren=new THREE.WebGLRenderer({canvas:cv,powerPreference:'high-performance'});
+ren.setPixelRatio(Math.min(devicePixelRatio||1,0.9));
+const cam=new THREE.PerspectiveCamera(75,1,.1,330);cam.rotation.order='YXZ';
+// 白い正方形の太陽と月。東(+X)から西(-X)へ半円を描いて移動する。
+const celestialMat=(c)=>new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide,fog:false});
+const sunMesh=new THREE.Mesh(new THREE.BoxGeometry(7,7,.35),celestialMat(0xffffff));
+const moonMesh=new THREE.Mesh(new THREE.BoxGeometry(5.5,5.5,.3),celestialMat(0xe8edf5));
+scene.add(sunMesh,moonMesh);
+const SUN_DIST=150;
+function smoothstep(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x)}
+function updateDayNight(dt){
+ worldClock=(worldClock+dt)%TOTAL_CYCLE;
+ const phase=worldClock/TOTAL_CYCLE;
+ const day=phase<.5;
+ const half=day?phase/.5:0;
+ // 昼：太陽は東(+X)から西(-X)。夜：月も東(+X)から西(-X)。
+ const a=half*Math.PI;
+ const sx=Math.cos(a)*SUN_DIST, sy=Math.sin(a)*SUN_DIST+18;
+ const mx=Math.cos(a)*SUN_DIST, my=Math.sin(a)*SUN_DIST+18;
+ sunMesh.position.set(P.x+sx, P.y+sy, P.z);
+ moonMesh.position.set(P.x+mx, P.y+my, P.z);
+ sunMesh.visible=day; moonMesh.visible=!day;
+ // 昼の開始2分＝朝、終了2分＝夕方。夜は地面の明るさ4で安定させる。
+ let level;
+ if(day){
+   const t=phase/.5;
+   if(t<.2) level=NIGHT_BRIGHT+(DAY_BRIGHT-NIGHT_BRIGHT)*smoothstep(0,.2,t);
+   else if(t>.8) level=NIGHT_BRIGHT+(DAY_BRIGHT-NIGHT_BRIGHT)*(1-smoothstep(.8,1,t));
+   else level=DAY_BRIGHT;
+   if(t<.2) skyCol.copy(orangeSky).lerp(daySky,smoothstep(.04,.2,t));
+   else if(t>.8) skyCol.copy(daySky).lerp(orangeSky,smoothstep(.8,1,t));
+   else skyCol.copy(daySky);
+ }else{
+   level=NIGHT_BRIGHT;
+   skyCol.copy(nightSky);
+ }
+ // 地面の明るさを「昼15・夜4」として比例変換。MeshBasicMaterialなので材質倍率で直接反映する。
+ const mul=level/DAY_BRIGHT;
+ // MOBはブロックの色倍率では暗くならないため、シーン照明も昼夜に合わせて調整する。
+ if(typeof ambientLight!=='undefined') ambientLight.intensity=.8*mul*brightMul;
+ if(typeof dl!=='undefined') dl.intensity=.5*mul*brightMul;
+ mat.color.setScalar(mul*brightMul); wmat.color.setScalar(mul*brightMul); grassMat.color.setScalar(mul*brightMul);
+ if(uw){uwTmp.copy(UWC).multiplyScalar(Math.max(.3,mul));scene.background.copy(uwTmp);scene.fog.color.copy(uwTmp)}else{scene.background.copy(skyCol);scene.fog.color.copy(skyCol)}
+ scene.fog.near=uw?.1:35; scene.fog.far=uw?28:RD*16-10;
+}
+function resize(){ren.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();
+const mat=new THREE.MeshBasicMaterial({map:tex,vertexColors:true,fog:true,alphaTest:.5});
+const wmat=new THREE.MeshBasicMaterial({map:tex,vertexColors:true,fog:true,transparent:true,opacity:.65,depthWrite:false});
+const grassMat=new THREE.MeshBasicMaterial({color:0x4f9f35,vertexColors:true,fog:true,transparent:true,opacity:.98,side:THREE.DoubleSide,depthWrite:false});
+// ---- world ----
+const C=new Map(),edits=new Map(),ck=(a,b)=>(a+512)*1024+(b+512);
+const hAt=(x,z)=>Math.floor(26+(vn(x/220,z/220)-.5)*40+vn(x/70,z/70)*18+vn(x/22,z/22)*6+vn(x/7,z/7)*2);
+function ore(x,y,z){const r=hs(x*1.7+y*7.3,z*2.9+y*3.1);
+ if(y<7&&r<.012)return 14;if(y<9&&r<.025)return 13;if(r<.045)return 12;if(r<.08)return 11;if(hs(x*5.1+z*.7,y*2.3+z*4.9)<.03)return 15;return 3}
+const cave=(x,y,z)=>{const a=vn3(x/22,y/14,z/22)-.5;if(a*a>.012)return false;const c=vn3(x/22+99,y/14+41,z/22+17)-.5;return a*a+c*c<.012};
+// ---- バイオーム ----
+const BI={PLAINS:0,FOREST:1,SAVANNA:2,COAST:3,SNOW:4};
+const BID={
+ spruceLog:nmid('トウヒの原木'),spruceLeaf:nmid('トウヒの葉'),
+ birchLog:nmid('シラカバの原木'),birchLeaf:nmid('シラカバの葉'),
+ acaciaLog:nmid('アカシアの原木'),acaciaLeaf:nmid('アカシアの葉'),
+ snow:nmid('雪ブロック')
+};
+function biomeAt(x,z,h){
+ const a=vn(x/150,z/150), b=vn(x/55+31,z/55+17);
+ // 5種類だけ。海面付近を海岸、それ以外を大きめの自然な領域にする。
+ if(h===undefined)h=hAt(x,z);
+ if(h<=SL+2)return BI.COAST;
+ if(a<.20)return BI.SAVANNA;
+ if(a>.82)return BI.SNOW;
+ if(b>.52)return BI.FOREST;
+ return BI.PLAINS;
+}
+function biomeTree(x,z){
+ const cX=Math.floor(x/4),cZ=Math.floor(z/4);
+ if(x!==cX*4+Math.floor(hs(cX*19.17+7,cZ*31.73+11)*4)||z!==cZ*4+Math.floor(hs(cX*43.71+17,cZ*13.29+23)*4))return null;
+ const r=hs(cX*71.13+5,cZ*37.91+9);if(r>.34)return null;
+ const b=biomeAt(x,z);if(b===BI.COAST)return null;
+ if(r>(b===BI.FOREST?.34:b===BI.SAVANNA?.18:b===BI.SNOW?.16:.10))return null;
+ return b===BI.SAVANNA?['acacia',BID.acaciaLog,BID.acaciaLeaf]:b===BI.SNOW?['spruce',BID.spruceLog,BID.spruceLeaf]:['oak',4,5]}
+// Lighting cache must exist before initial world/chunk generation.
+let blockLightCache=new Map(),blockLightDirty=true,lightSystemReady=false;const lightMeshDirty=new Set();
+function genChunk(cx,cz){
+ const d=new Uint16Array(256*H),X0=cx*16,Z0=cz*16;let top=1;
+ for(let lz=0;lz<16;lz++)for(let lx=0;lx<16;lx++){
+  const x=X0+lx,z=Z0+lz,h=hAt(x,z),sd=h<=SL+1,m=Math.max(h,SL),bio=biomeAt(x,z,h);
+  for(let y=0;y<=m;y++){
+   let surface=sd?6:1,fill=sd?16:2;
+   if(!sd){
+    if(bio===BI.COAST){surface=6;fill=16}
+    else if(bio===BI.SNOW){surface=BID.snow;fill=2}
+   }
+   let b=y>h?WA:y==h?surface:y>h-4?fill:ore(x,y,z);
+   if(y>4&&y<h&&cave(x,y,z))b=y<=11?LA:0;
+   d[lx+16*(lz+16*y)]=b}
+  d[lx+16*lz]=10;
+  for(let y=1;y<5;y++)if(hs(x*3.1+y,z*2.7+y*5)<.8-y*.2)d[lx+16*(lz+16*y)]=10;
+  if(m+1>top)top=m+1}
+ const set=(x,y,z,b,soft)=>{const lx=x-X0,lz=z-Z0;if(lx<0||lz<0||lx>15||lz>15)return;const i=idx(lx,y,lz);if(soft&&d[i])return;d[i]=b;if(y+1>top)top=y+1};
+ for(let tz=Z0-1;tz<Z0+17;tz++)for(let tx=X0-1;tx<X0+17;tx++){
+  const tr=biomeTree(tx,tz);if(!tr)continue;
+  const h=hAt(tx,tz),bio=biomeAt(tx,tz);if(h<=SL+2||h>H-10)continue;
+  // 海岸・急斜面・砂漠には木を置かず、陸地のまとまりにだけ生成する。
+  if(bio===BI.COAST||h<=SL+3)continue;
+  const kind=tr[0],log=tr[1],leaf=tr[2];
+  const tall=kind==='spruce'?6:kind==='acacia'?5:4;
+  for(let y=1;y<=tall;y++)set(tx,h+y,tz,log);
+  if(kind==='acacia'){
+   // アカシアは横に広がった樹冠にし、最上部まで葉で覆って上から幹が見えないようにする。
+   for(let dy=3;dy<=6;dy++){
+    const rad=dy===3?1:dy===4?3:dy===5?3:2;
+    for(let dx=-rad;dx<=rad;dx++)for(let dz=-rad;dz<=rad;dz++){
+     const edge=Math.abs(dx)+Math.abs(dz);
+     const wobble=hs((tx+dx)*5.7+dy*11,(tz+dz)*4.3-dy*7);
+     const limit=dy===6?3:dy===5?4:dy===4?4:2;
+     if(edge<=limit && wobble>.08)set(tx+dx,h+dy,tz+dz,leaf,false);
+    }
+   }
+  }else if(kind==='spruce'){
+   for(let dy=2;dy<=tall+1;dy++){const rad=Math.max(0,Math.min(2,Math.floor((tall+1-dy)/2)+1));for(let dx=-rad;dx<=rad;dx++)for(let dz=-rad;dz<=rad;dz++)if(Math.abs(dx)+Math.abs(dz)<=rad+1)set(tx+dx,h+dy,tz+dz,leaf,true)}
+  }else if(kind==='jungle'){
+   for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=4;dy<=7;dy++)if(Math.abs(dx)+Math.abs(dz)+(dy-4)*.45<4.2)set(tx+dx,h+dy,tz+dz,leaf,true);
+  }else{
+   // オーク/シラカバ：円形ではなく少し崩した自然な樹冠。
+   for(let dy=tall-2;dy<=tall+1;dy++){
+    const rad=dy===tall+1?1:dy===tall?2:2;
+    for(let dx=-rad;dx<=rad;dx++)for(let dz=-rad;dz<=rad;dz++){
+     const edge=Math.abs(dx)+Math.abs(dz);
+     const wobble=hs((tx+dx)*4.1+dy*7,(tz+dz)*3.7-dy*5);
+     if(edge<=rad+(wobble>.72?1:0) && !(Math.abs(dx)===rad&&Math.abs(dz)===rad&&wobble<.55))set(tx+dx,h+dy,tz+dz,leaf,true);
+    }
+   }
+  }}
+ const key=ck(cx,cz),e=edits.get(key);
+ if(e)e.forEach((b,i)=>{d[i]=b;const y=(i>>8);if(b&&y+1>top)top=y+1});
+ return{d,top,cx,cz,v:false,m:null,wm:null}}
+function getC(cx,cz){if(cx<-LIM||cx>=LIM||cz<-LIM||cz>=LIM)return null;const k=ck(cx,cz);let c=C.get(k);if(!c){c=genChunk(cx,cz);C.set(k,c);try{blockLightDirty=true}catch(_e){}}return c}
+let _ck=-1,_cc=null;
+function getB(x,y,z){if(y<0)return 10;if(y>=H)return 0;const cx=x>>4,cz=z>>4,k=ck(cx,cz);let c;if(k===_ck)c=_cc;else{c=getC(cx,cz);_ck=k;_cc=c}return c?c.d[idx(x&15,y,z&15)]:10}
+const solid=b=>b&&!FL[b&255];
+function drop(c){for(const m of[c.m,c.wm,c.gm])if(m){scene.remove(m);m.geometry.dispose()}c.m=c.wm=c.gm=null}
+
+const FULL=[[0,0,0,1,1,1]],HEADB=[[0,0,.75,1,1,1],[.375,.375,0,.625,.625,.75]];
+function orient(L,f){return L.map(([x0,y0,z0,x1,y1,z1])=>f==2?[x0,y0,z0,x1,y1,z1]:f==0?[1-x1,y0,1-z1,1-x0,y1,1-z0]:f==1?[z0,y0,1-x1,z1,y1,1-x0]:f==3?[1-z1,y0,x0,1-z0,y1,x1]:f==4?[x0,z0,1-y1,x1,z1,1-y0]:[x0,1-z1,y0,x1,1-z0,y1])}
+function dustConn(n,f){const bs=n&255;if(bs===RED_DUST||bs===RED_TORCH||bs===LEVER||bs===STONE_BUTTON||bs===PRESSURE||bs===RBLK||bs===TARGET)return true;
+ if(bs===REPEATER||bs===COMPARATOR||bs===OBSERVER)return((n>>8)&1)===(f&1)||(((n>>8)&3)&1)===(f&1);return false}
+function dustBoxes(x,y,z){const l=[0,0,0,0];for(let f=0;f<4;f++)l[f]=dustConn(getB(x+D4[f][0],y,z+D4[f][2]),f)?1:0;
+ const ax=l[1]||l[3],az=l[0]||l[2];if(ax&&!az)l[1]=l[3]=1;else if(az&&!ax)l[0]=l[2]=1;
+ const o=[[.375,0,.375,.625,.0625,.625]];if(l[1])o.push([.625,0,.4375,1,.0625,.5625]);if(l[3])o.push([0,0,.4375,.375,.0625,.5625]);if(l[2])o.push([.4375,0,.625,.5625,.0625,1]);if(l[0])o.push([.4375,0,0,.5625,.0625,.375]);return o}
+function hopBoxes(s){const f=s-1,sp=s===0?[.375,0,.375,.625,.25,.625]:f==0?[.375,.25,0,.625,.5,.25]:f==1?[.75,.25,.375,1,.5,.625]:f==2?[.375,.25,.75,.625,.5,1]:[0,.25,.375,.25,.5,.625];return[[0,.625,0,1,1,1],[.25,.25,.25,.75,.625,.75],sp]}
+const D4=[[0,0,-1],[1,0,0],[0,0,1],[-1,0,0]];
+function boxes(v,x,y,z,rd){const s=v>>8,bs=v&255;
+ if(THIN[bs]){const t=THIN[bs];if(t===4)return s?LEVON:LEVOFF;if(bs===RED_DUST)return dustBoxes(x,y,z);if(bs===HOPPER)return hopBoxes(s);return THINB[t]}
+ if(RSF[bs]){if(bs===PISTON||bs===STICKY_PISTON)return(s&8)?orient([[0,0,0,1,1,.75]],s&7):FULL;if(bs===PHEAD)return orient(HEADB,s&7);return FULL}
+ if(AXB[bs])return FULL;
+ if(!s)return FULL;
+ if(s>=29&&s<=32)return CHESTB;
+ if(s<9){const f=(s-1)&3,top=(s-1)>>2,y0=top?0:.5,y1=top?.5:1;
+  return[top?[0,.5,0,1,1,1]:[0,0,0,1,.5,1],f==0?[0,y0,0,1,y1,.5]:f==1?[.5,y0,0,1,y1,1]:f==2?[0,y0,.5,1,y1,1]:[0,y0,0,.5,y1,1]]}
+ if(s<11)return[s==9?[0,0,0,1,.5,1]:[0,.5,0,1,1,1]];
+ if(s<13){const w=s==12,a=w?.25:.375,b=1-a,ph=rd?1:1.5,ah=rd?.875:1.5,t=w?.3125:.4375,u=1-t,o=[[a,0,a,b,ph,b]];
+  const k=(dx,dz)=>{const n=getB(x+dx,y,z+dz);return n&&((n>>8)==11||(n>>8)==12||(n<256&&solid(n)&&!TR.has(n)))};
+  const arm=(x0,z0,x1,z1)=>{if(rd&&!w){o.push([x0,.375,z0,x1,.5625,z1],[x0,.75,z0,x1,.9375,z1])}else o.push([x0,0,z0,x1,ah,z1])};
+  if(k(1,0))arm(b,t,1,u);if(k(-1,0))arm(0,t,a,u);if(k(0,1))arm(t,b,u,1);if(k(0,-1))arm(t,0,u,a);return o}
+ const t=s-13,f=t&3,op=(t>>2)&1,top=(t>>3)&1;
+ if(!op)return[top?[0,.8125,0,1,1,1]:[0,0,0,1,.1875,1]];
+ return[f==0?[0,0,0,1,1,.1875]:f==1?[.8125,0,0,1,1,1]:f==2?[0,0,.8125,1,1,1]:[0,0,0,.1875,1,1]]}
+// 面ごとのUV: 側面は外から見て左→右にu、下→上にv。上面は北(-z)が画面の上。
+function uvOf(d,px,py,pz){return d[1]>0?[px,1-pz]:d[1]<0?[px,pz]:d[0]>0?[1-pz,py]:d[0]<0?[pz,py]:d[2]>0?[px,py]:[1-px,py]}
+// 丸太などの「軸ブロック」：置いた面(壁)の向きに合わせて回転する
+const AXB=new Uint8Array(256);for(const k in NMS){const n=NMS[k];if(n.endsWith('の原木')||n.endsWith('幹')||n==='竹ブロック'||n==='干し草の俵'||n==='骨ブロック')AXB[k]=1}AXB[4]=1;
+for(let i=1;i<256;i++)if(AXB[i])FULLO.add(i);
+const di=d=>d[2]<0?0:d[0]>0?1:d[2]>0?2:d[0]<0?3:d[1]>0?4:5;
+function occl(nb){return nb&&!FL[nb&255]&&!TR.has(nb)&&!THIN[nb&255]&&(nb<256?(!RSF[nb]||FULLO.has(nb)):FULLO.has(nb&255))}
+function pickTile(v,d,bt,alt){const bs=v&255,s=v>>8,k=di(d);if(alt)return bt[3];
+ if(AXB[bs]&&s>0&&s<3)return d[s===1?0:2]!==0?bt[0]:bt[1];
+ if(bs===CHEST&&s>=29&&!d[1]&&k===s-29)return bt[3];
+ if(bs===OBSERVER){const f=s&3;if(k===f)return bt[1];if(k===((f+2)&3))return bt[3];return d[1]?bt[0]:bt[2]}
+ if(bs===DISPENSER||bs===DROPPER)return k===(s&3)?bt[1]:bt[0];
+ if(bs===PISTON||bs===STICKY_PISTON){const f=s&7,opp=f<4?(f+2)&3:f^1;if(k===f)return(s&8)?bt[2]:bt[0];if(k===opp)return bt[2];return f>=4?bt[1]:bt[3]}
+ if(bs===PHEAD){const f=s&7;return k===f?((s&8)?bt[3]:bt[0]):bt[1]}
+ if(bs===RED_LAMP&&(s&1))return bt[3];
+ if(bs===REPEATER&&(s&16)&&d[1]>0)return bt[3];
+ if(bs===COMPARATOR&&(s&4)&&d[1]>0)return bt[3];
+ return d[1]>0?bt[0]:d[1]<0?bt[2]:bt[1]}
+function shapeFaces(S,c,g,x,y,z,v,bt,j){
+ const bs=v&255,s=v>>8,rp=(bs===REPEATER||bs===COMPARATOR),dk=bs===RED_DUST?.5+.7*(s/15):1;
+ for(const[x0,y0,z0,x1,y1,z1,alt]of boxes(v,c.cx*16+x,y,c.cz*16+z,true)){
+  for(const[d,cq,sh]of F){
+   if((d[0]==1&&x1==1)||(d[0]==-1&&x0==0)||(d[1]==1&&y1==1)||(d[1]==-1&&y0==0)||(d[2]==1&&z1==1)||(d[2]==-1&&z0==0)){
+    if(occl(g(x+d[0],y+d[1],z+d[2])))continue}
+   const t=pickTile(v,d,bt,alt),k=sh*j*dk;
+   for(const q of cq){const px=q[0]?x1:x0,py=q[1]?y1:y0,pz=q[2]?z1:z0;S.p.push(x+px,y+py,z+pz);S.c.push(k,k,k);
+    let[u,w]=uvOf(d,px,py,pz);
+    if(rp&&d[1]>0){const f=s&3;if(f==1)[u,w]=[pz,px];else if(f==2)[u,w]=[1-px,pz];else if(f==3)[u,w]=[1-pz,1-px]}
+    if(AXB[bs]&&s>0&&s<3&&d[s===1?0:2]===0){if(s===1)[u,w]=d[2]?[py,px]:[pz,px];else[u,w]=d[0]?[py,pz]:[px,pz]}
+    S.u.push(((t%CO)+.01+u*.98)/CO,(RW-1-Math.floor(t/CO)+.01+w*.98)/RW)}
+   S.i.push(S.n,S.n+1,S.n+2,S.n,S.n+2,S.n+3);S.n+=4}}}
+function mesh(c){
+ const cs=[C.get(ck(c.cx-1,c.cz-1))||null,C.get(ck(c.cx,c.cz-1))||null,C.get(ck(c.cx+1,c.cz-1))||null,C.get(ck(c.cx-1,c.cz))||null,c,C.get(ck(c.cx+1,c.cz))||null,C.get(ck(c.cx-1,c.cz+1))||null,C.get(ck(c.cx,c.cz+1))||null,C.get(ck(c.cx+1,c.cz+1))||null];
+ const g=(x,y,z)=>{if(y<0)return 10;if(y>=H)return 0;const o=cs[(z<0?0:z>15?2:1)*3+(x<0?0:x>15?2:1)];return o?o.d[(x&15)+16*((z&15)+16*y)]:10};
+ const SS={p:[],c:[],u:[],i:[],n:0},WS={p:[],c:[],u:[],i:[],n:0},GS={p:[],c:[],i:[],n:0};
+ const addGrass=(x,y,z,seed)=>{
+ const X=x+c.cx*16,Z=z+c.cz*16,base=hh(X,Z,seed);
+ if(base>.48)return;
+ const flowerRoll=hh(X+91,Z-37,seed+71);
+ const flower=flowerRoll<.055?"daisy":flowerRoll<.105?"dandelion":flowerRoll<.145?"poppy":flowerRoll<.165?"rosebush":"grass";
+ const quad=(a,b,d,e,f,g,h,i,j,k,l,m,cols)=>{
+  GS.p.push(a,b,d,e,f,g,h,i,j,k,l,m);
+  for(let q=0;q<4;q++)GS.c.push(cols[0],cols[1],cols[2]);
+  GS.i.push(GS.n,GS.n+1,GS.n+2,GS.n,GS.n+2,GS.n+3);GS.n+=4;
+ };
+ const stem=(cx,cz,h,w,lean,shade)=>{
+  const x0=x+cx-w,x1=x+cx+w,z0=z+cz-w,z1=z+cz+w,y0=y+.98,y1=y+.98+h;
+  const green=[.18+.28*shade,.48+.30*shade,.05+.16*shade];
+  quad(x0,y0,z0,x1,y0,z1,x1+lean,y1,z1,x0+lean,y1,z0,green);
+  quad(x0,y0,z1,x1,y0,z0,x1-lean,y1,z0,x0-lean,y1,z1,[green[0]*.92,green[1]*.92,green[2]*.92]);
+ };
+ if(flower==="grass"){
+  const blades=1+(hh(X+17,Z+29,seed+3)>.38?1:0)+(hh(X+41,Z+7,seed+5)>.72?1:0);
+  for(let n=0;n<blades;n++){
+   const seed2=seed+n*19+Math.floor(hh(X+n,Z-n,seed+31)*999);
+   const ox=.08+hh(X+17+n*7,Z+29,seed2+3)*.76,oz=.08+hh(X+41,Z+7+n*11,seed2+5)*.76;
+   const h=.30+hh(X+13+n*5,Z+19,seed2+9)*.46,w=.045+hh(X+31,Z+11+n*3,seed2+11)*.055;
+   const lean=(hh(X+n*13,Z-n*9,seed2+15)-.5)*.24,col=.60+hh(X,Z,seed2+17)*.40;
+   stem(ox,oz,h,w,lean,col);
+  }
+  return;
+ }
+ const ox=.22+hh(X+17,Z+29,seed+3)*.56,oz=.22+hh(X+41,Z+7,seed+5)*.56;
+ if(flower==="daisy" || flower==="dandelion" || flower==="poppy"){
+  const h=.38+hh(X+13,Z+19,seed+9)*.16,w=.055+hh(X+31,Z+11,seed+11)*.025;
+  stem(ox,oz,h,w,(hh(X,Z,seed+15)-.5)*.08,.75);
+  const fx=x+ox,fz=z+oz,fy=y+.98+h-.015,s=.075+hh(X+63,Z+23,seed+21)*.025;
+  const fc=flower==="daisy"?[.90,.90,.78]:flower==="dandelion"?[.95,.78,.08]:[.78,.10,.08];
+  quad(fx-s,fy,fz,fx+s,fy,fz,fx+s,fy+s*.72,fz,fx-s,fy+s*.72,fz,fc);
+  quad(fx,fy,fz-s,fx,fy,fz+s,fx,fy+s*.72,fz+s,fx,fy+s*.72,fz-s,fc);
+  quad(fx-s*.72,fy,fz-s*.72,fx+s*.72,fy,fz+s*.72,fx+s*.72,fy+s*.50,fz+s*.72,fx-s*.72,fy+s*.50,fz-s*.72,fc);
+  return;
+ }
+ const bushH=.62+hh(X+13,Z+19,seed+9)*.18;
+ const green1=[.13,.42,.07],green2=[.18,.50,.08];
+ const centers=[[-.13,-.07,.00],[.13,.06,.04],[.00,.13,.10]];
+ for(let q=0;q<centers.length;q++){
+  const [dx,dz,dh]=centers[q],bw=.13,cx=x+ox+dx,cz=z+oz+dz,by=y+.98+bushH*.45+dh;
+  quad(cx-bw,by,cz,cx+bw,by,cz,cx+bw,by+.12,cz,cx-bw,by+.12,cz,q%2?green1:green2);
+  quad(cx,by,cz-bw,cx,by,cz+bw,cx,by+.12,cz+bw,cx,by+.12,cz-bw,q%2?green2:green1);
+ }
+ for(let q=0;q<3;q++){
+  const rx=x+ox+[-.14,.13,.02][q],rz=z+oz+[-.03,.05,.15][q],ry=y+.98+bushH+[.02,.06,.10][q],rs=.10;
+  const red=q===1?[.62,.06,.05]:[.78,.08,.06];
+  quad(rx-rs,ry,rz,rx+rs,ry,rz,rx+rs,ry+rs*.65,rz,rx-rs,ry+rs*.65,rz,red);
+  quad(rx,ry,rz-rs,rx,ry,rz+rs,rx,ry+rs*.65,rz+rs,rx,ry+rs*.65,rz-rs,red);
+ }
+};;
+ for(let y=0;y<c.top;y++)for(let z=0;z<16;z++)for(let x=0;x<16;x++){
+  const b=c.d[x+16*(z+16*y)];if(!b)continue;const fk=FL[b&255];if(fk){fluidFaces(fk===1?WS:SS,g,x,y,z,b,BT[b&255]);continue}const fl=false,S=fl?WS:SS,bt=BT[b&255],j=.94+hh(x+c.cx*16,z+c.cz*16,y)*.1;if(b===1 && y+1<c.top && !g(x,y+1,z) && hh(x+c.cx*16,z+c.cz*16,101)<.48)addGrass(x,y,z,101);if(b>255||THIN[b]||RSF[b]){shapeFaces(SS,c,g,x,y,z,b,bt,j);continue}
+  for(const[d,cq,sh]of F){const nb=g(x+d[0],y+d[1],z+d[2]);
+   if(fl){if(nb)continue}else if(occl(nb)||nb==b)continue;
+   const t=d[1]>0?bt[0]:d[1]<0?bt[2]:bt[1],k=sh*j;
+   for(const q of cq){const vx=x+q[0],vy=y+q[1]-(fl&&d[1]>0?.1:0),vz=z+q[2];S.p.push(vx,vy,vz);const bl=blockLightAt(c.cx*16+vx+d[0]*.01,vy+d[1]*.01,c.cz*16+vz+d[2]*.01);const cornerAO=(occl(g(x+(q[0]>.5?1:-1),y,z))?0.08:0)+(occl(g(x,y+(q[1]>.5?1:-1),z))?0.08:0)+(occl(g(x,y,z+(q[2]>.5?1:-1)))?0.08:0);const shade=Math.min(1.8,1+bl*1.0)*Math.max(.72,1-cornerAO);S.c.push(k*shade,k*shade,k*shade);
+    const[u,v]=uvOf(d,q[0],q[1],q[2]);
+    S.u.push(((t%CO)+(u?.99:.01))/CO,(RW-1-Math.floor(t/CO)+(v?.99:.01))/RW)}
+   S.i.push(S.n,S.n+1,S.n+2,S.n,S.n+2,S.n+3);S.n+=4}}
+ const mk=(S,mt)=>{if(!S.n)return null;const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(S.p,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(S.c,3));
+  geo.setAttribute('uv',new THREE.Float32BufferAttribute(S.u,2));geo.setIndex(S.i);
+  const m=new THREE.Mesh(geo,mt);m.position.set(c.cx*16,0,c.cz*16);scene.add(m);return m};
+ const mkGrass=S=>{if(!S.n)return null;const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(S.p,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(S.c,3));geo.setIndex(S.i);const m=new THREE.Mesh(geo,grassMat);m.position.set(c.cx*16,0,c.cz*16);scene.add(m);return m};
+ drop(c);c.m=mk(SS,mat);c.wm=mk(WS,wmat);c.gm=mkGrass(GS);c.v=true}
+function setB(x,y,z,b){const cx=x>>4,cz=z>>4,c=getC(cx,cz);if(!c||y<0||y>=H)return;const lx=x&15,lz=z&15,i=idx(lx,y,lz);
+ const old0=c.d[i];c.d[i]=b;blockLightDirty=true;if((typeof isLightSource==='function')&&(isLightSource(old0)||isLightSource(b))){for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++)lightMeshDirty.add(ck(cx+dx,cz+dz))}if(b&&y+1>c.top)c.top=y+1;rsReg(x,y,z,old0,b);fluidDirty(x,y,z,old0,b);
+ let e=edits.get(ck(cx,cz));if(!e)edits.set(ck(cx,cz),e=new Map());e.set(i,b);
+ mesh(c);const nn=(a,q)=>{const o=C.get(ck(a,q));if(o&&o.v)mesh(o)};
+ if(lx==0)nn(cx-1,cz);if(lx==15)nn(cx+1,cz);if(lz==0)nn(cx,cz-1);if(lz==15)nn(cx,cz+1)}
+let queue=[],lcx=1e9,lcz=1e9;
+function stream(force){
+ const pcx=Math.floor(P.x)>>4,pcz=Math.floor(P.z)>>4;
+ if(pcx!=lcx||pcz!=lcz){lcx=pcx;lcz=pcz;queue=[];
+  for(let dz=-RD;dz<=RD;dz++)for(let dx=-RD;dx<=RD;dx++){const d2=dx*dx+dz*dz;if(d2>RD*RD+RD)continue;
+   const c=C.get(ck(pcx+dx,pcz+dz));if(!c||!c.v)queue.push([d2,pcx+dx,pcz+dz])}
+  queue.sort((a,b)=>a[0]-b[0]);
+  for(const[k,c]of C){const dd=Math.max(Math.abs(c.cx-pcx),Math.abs(c.cz-pcz));
+   if(dd>RD+3){drop(c);C.delete(k);_ck=-1}else if(dd>RD+1&&c.v){drop(c);c.v=false}}}
+ const t0=performance.now();
+ let qi=0;while(qi<queue.length){const[,cx,cz]=queue[qi++],c=getC(cx,cz);if(c&&!c.v)mesh(c);if(!force&&performance.now()-t0>4)break}if(qi)queue=queue.slice(qi)}
+// ---- player / save ----
+const P={x:0,y:0,z:0,vx:0,vy:0,vz:0,yaw:0,pitch:0,ground:false},R=.3,HT=1.8;
+const HONEY=nmid('ハチミツブロック'), SLIME=nmid('スライムブロック');
+function honeyContact(x,y,z){const bx=Math.floor(x),bz=Math.floor(z),by=Math.floor(y-.08);if((getB(bx,by,bz)&255)===HONEY)return true;for(const yy of [Math.floor(y+.05),Math.floor(y+.4),Math.floor(y+1),Math.floor(y+1.4)]){if((getB(bx-1,yy,bz)&255)===HONEY||(getB(bx+1,yy,bz)&255)===HONEY||(getB(bx,yy,bz-1)&255)===HONEY||(getB(bx,yy,bz+1)&255)===HONEY)return true}return false;}
+function slimeUnder(x,y,z,r=0){const ys=[Math.floor(y-.02),Math.floor(y-.08),Math.floor(y-.15)];for(const yy of ys){if((getB(Math.floor(x),yy,Math.floor(z))&255)===SLIME)return true;if(r>0){for(const [dx,dz] of [[-r,-r],[-r,r],[r,-r],[r,r]])if((getB(Math.floor(x+dx),yy,Math.floor(z+dz))&255)===SLIME)return true}}return false;}
+let SX=0,SZ=0;for(let i=0;i<400;i++){if(hAt(i*9,0)>SL+3){SX=i*9;break}}
+function surfY(x,z){for(let y=H-1;y>0;y--)if(solid(getB(x,y,z)))return y+1;return H}
+function respawn(){P.x=SX+.5;P.z=SZ+.5;P.y=surfY(SX,SZ)+.1;P.vy=0;hp=20;updateHp()}
+const SK='minicraft_v2',toastEl=document.getElementById('toast');let tt;
+function toast(t){toastEl.textContent=t;toastEl.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>toastEl.style.opacity=0,1800)}
+const chests={},RS=new Map();let noSave=false;function save(man){if(noSave)return;try{const e={};edits.forEach((m,k)=>{const a=[];m.forEach((b,i)=>a.push(i,b));e[k]=a});
+ localStorage.setItem(SK,JSON.stringify({p:[P.x,P.y,P.z,P.yaw,P.pitch],hot,sel,e,invCount,equipped,ch:chests}));if(typeof refreshSaveInfo==='function')refreshSaveInfo();if(man)toast('セーブしました')}catch(x){if(man)toast('セーブに失敗しました')}}
+function load(){try{const j=JSON.parse(localStorage.getItem(SK));if(!j)return false;
+ for(const k in j.e){const m=new Map(),a=j.e[k];for(let i=0;i<a.length;i+=2)m.set(a[i],a[i+1]);edits.set(+k,m)}
+ [P.x,P.y,P.z,P.yaw,P.pitch]=j.p;if(j.hot&&j.hot.length==9)j.hot.forEach((v,i)=>hot[i]=(v===24||v===25)?1:v);sel=j.sel||0;if(j.invCount)Object.assign(invCount,j.invCount);if(j.equipped)Object.assign(equipped,j.equipped);if(j.ch)Object.assign(chests,j.ch);return true}catch(x){return false}}
+// ワールド読込はインベントリ・装備・回路関数の初期化後に実行する（TDZによる起動失敗を防止）
+let loaded=false;
+setInterval(()=>save(false),20000);addEventListener('pagehide',()=>save(false));document.addEventListener('visibilitychange',()=>{if(document.hidden)save(false)});
+// ---- UI ----
+const bar=document.getElementById('bar'),AU=ac.toDataURL();
+const NM={1:'草ブロック',2:'土',3:'石',4:'原木',5:'葉',6:'砂',7:'板材',8:'丸石',9:'レンガ',11:'石炭鉱石',12:'鉄鉱石',13:'金鉱石',14:'ダイヤ鉱石',15:'砂利',16:'砂岩',17:'ガラス',18:'黒曜石',19:'白の羊毛',20:'赤の羊毛',21:'青の羊毛',23:'石レンガ',24:'水',25:'溶岩'};Object.assign(NM,NMS);for(const [id,name] of Object.entries(NM)){if(name==='ブロック'){delete NM[id];const ix=PL.indexOf(+id);if(ix>=0)PL.splice(ix,1)}}
+// ---- アイテム / 装備 / クラフト ----
+const ITEMS={};let nextItem=1000;
+function item(name,type,damage,icon){const id=nextItem++;ITEMS[id]={id,name,type,damage:damage||0,icon:icon||'◆',dur: type==='armor'?80: type==='tool'?120:1};return id}
+const I={
+ woodSword:item('木の剣','weapon',4,'🗡'),stoneSword:item('石の剣','weapon',5,'🗡'),ironSword:item('鉄の剣','weapon',7,'⚔'),diamondSword:item('ダイヤモンドの剣','weapon',9,'⚔'),netheriteSword:item('ネザライトの剣','weapon',10,'⚔'),
+ woodPick:item('木のツルハシ','tool',2,'⛏'),stonePick:item('石のツルハシ','tool',3,'⛏'),ironPick:item('鉄のツルハシ','tool',4,'⛏'),diamondPick:item('ダイヤモンドのツルハシ','tool',5,'⛏'),netheritePick:item('ネザライトのツルハシ','tool',6,'⛏'),
+ woodAxe:item('木の斧','tool',3,'🪓'),ironAxe:item('鉄の斧','tool',5,'🪓'),diamondAxe:item('ダイヤモンドの斧','tool',7,'🪓'),
+ ironHelmet:item('鉄のヘルメット','armor',2,'⛑'),ironChest:item('鉄のチェストプレート','armor',6,'🛡'),ironLegs:item('鉄のレギンス','armor',5,'🛡'),ironBoots:item('鉄のブーツ','armor',2,'🥾'),
+ diamondHelmet:item('ダイヤモンドのヘルメット','armor',3,'⛑'),diamondChest:item('ダイヤモンドのチェストプレート','armor',8,'🛡'),diamondLegs:item('ダイヤモンドのレギンス','armor',6,'🛡'),diamondBoots:item('ダイヤモンドのブーツ','armor',3,'🥾'),
+ netheriteHelmet:item('ネザライトのヘルメット','armor',4,'⛑'),netheriteChest:item('ネザライトのチェストプレート','armor',9,'🛡'),netheriteLegs:item('ネザライトのレギンス','armor',7,'🛡'),netheriteBoots:item('ネザライトのブーツ','armor',4,'🥾'),
+ redstone:item('レッドストーン','material',0,'◆'),iron:item('鉄インゴット','material',0,'⬜'),diamond:item('ダイヤモンド','material',0,'◇'),stick:item('棒','material',0,'│')};
+Object.assign(I,{gold:item('金インゴット','material',0,'🟨'),apple:item('リンゴ','food',0,'🍎'),bread:item('パン','food',0,'🍞'),beef:item('生の牛肉','food',0,'🥩'),pork:item('生の豚肉','food',0,'🥩'),mutton:item('生の羊肉','food',0,'🍖'),chicken:item('生の鶏肉','food',0,'🍗'),rotten:item('腐った肉','food',0,'🟫'),leather:item('革','material',0,'▰'),feather:item('羽根','material',0,'🪶'),bone:item('骨','material',0,'🦴'),string:item('糸','material',0,'〰'),gunpowder:item('火薬','material',0,'▪'),arrow:item('矢','material',0,'➶'),rail:item('レール','block',0,'▤'),poweredRail:item('パワードレール','block',0,'▥'),detectorRail:item('検知レール','block',0,'▦'),activatorRail:item('アクティベーターレール','block',0,'▧'),minecart:item('トロッコ','transport',0,'▣')});
+Object.assign(I,{bucket:item('バケツ','material',0,'🪣'),waterBucket:item('水入りバケツ','material',0,'🪣'),lavaBucket:item('マグマ入りバケツ','material',0,'🪣')});
+for(const [k,h] of Object.entries({apple:4,bread:5,beef:3,pork:3,mutton:3,chicken:2,rotten:2}))ITEMS[I[k]].heal=h;
+const invCount={};
+function refreshSaveInfo(){
+ const el=document.getElementById('saveInfo');if(!el)return;
+ const ids=Object.keys(invCount).map(Number).filter(id=>invCount[id]>0);
+ const invText=ids.length?ids.map(id=>`${ITEMS[id]?.name||NM[id]||'アイテム'}×${invCount[id]}`).join(' / '):'空';
+ const editsCount=[...edits.values()].reduce((n,m)=>n+m.size,0), chestCount=Object.keys(chests).length;
+ el.innerHTML=`<b>保存ワールド情報</b><br>座標：X ${P.x.toFixed(1)} / Y ${P.y.toFixed(1)} / Z ${P.z.toFixed(1)}<br>変更ブロック：${editsCount.toLocaleString()} / チェスト：${chestCount}<br><b>インベントリ：</b>${invText}`;
+}
+refreshSaveInfo();
+function give(i,n=1){invCount[i]=(invCount[i]||0)+n;draw();if(typeof refreshSaveInfo==='function')refreshSaveInfo();if(inv&&typeof renderInventory==='function')renderInventory()}function take(i,n=1){if((invCount[i]||0)<n)return false;invCount[i]-=n;draw();if(typeof refreshSaveInfo==='function')refreshSaveInfo();return true}
+const equipped={weapon:null,helmet:null,chest:null,legs:null,boots:null};
+function isItem(id){return ITEMS[id]}
+function itemIcon(id){const q=ITEMS[id];if(q.img)return `<i style="background:#333 url(${q.img}) center/100% 100% no-repeat;image-rendering:pixelated"></i><u>${invCount[id]||0}</u>`;return `<i style="display:flex;align-items:center;justify-content:center;font-size:22px;background:#333;color:#fff">${q.icon}</i><u>${invCount[id]||0}</u>`}
+const recipes=[
+ [I.stick,'棒',[4,2]], [I.woodSword,'木の剣',[4,2,I.stick,1]], [I.stoneSword,'石の剣',[8,2,I.stick,1]], [I.ironSword,'鉄の剣',[I.iron,2,I.stick,1]], [I.diamondSword,'ダイヤモンドの剣',[I.diamond,2,I.stick,1]],
+ [I.woodPick,'木のツルハシ',[4,3,I.stick,2]], [I.stonePick,'石のツルハシ',[8,3,I.stick,2]], [I.ironPick,'鉄のツルハシ',[I.iron,3,I.stick,2]], [I.diamondPick,'ダイヤモンドのツルハシ',[I.diamond,3,I.stick,2]],
+ [I.ironHelmet,'鉄のヘルメット',[I.iron,5]], [I.ironChest,'鉄のチェストプレート',[I.iron,8]], [I.ironLegs,'鉄のレギンス',[I.iron,7]], [I.ironBoots,'鉄のブーツ',[I.iron,4]],
+ [I.diamondHelmet,'ダイヤモンドのヘルメット',[I.diamond,5]], [I.diamondChest,'ダイヤモンドのチェストプレート',[I.diamond,8]], [I.diamondLegs,'ダイヤモンドのレギンス',[I.diamond,7]], [I.diamondBoots,'ダイヤモンドのブーツ',[I.diamond,4]],
+ [I.netheriteSword,'ネザライトの剣',[I.diamondSword,1,I.iron,1]], [I.netheritePick,'ネザライトのツルハシ',[I.diamondPick,1,I.iron,1]], [I.netheriteHelmet,'ネザライトのヘルメット',[I.diamondHelmet,1,I.iron,1]], [I.netheriteChest,'ネザライトのチェストプレート',[I.diamondChest,1,I.iron,1]], [I.netheriteLegs,'ネザライトのレギンス',[I.diamondLegs,1,I.iron,1]], [I.netheriteBoots,'ネザライトのブーツ',[I.diamondBoots,1,I.iron,1]],
+ [RED_DUST,'レッドストーンダスト',[I.redstone,1]], [RED_TORCH,'レッドストーントーチ',[I.redstone,1,I.stick,1]], [REPEATER,'リピーター',[I.redstone,2,3,1,I.stick,1]], [LEVER,'レバー',[I.stick,1,8,1]], [STONE_BUTTON,'石のボタン',[3,2]], [PRESSURE,'石の感圧板',[3,2]], [PISTON,'ピストン',[7,3,I.iron,1,I.redstone,1,I.stick,4]], [STICKY_PISTON,'粘着ピストン',[PISTON,1,5,1]], [OBSERVER,'オブザーバー',[3,6,I.redstone,2]], [DISPENSER,'ディスペンサー',[3,7,I.redstone,1]], [COMPARATOR,'コンパレーター',[I.redstone,3,3,3,8,1]], [DROPPER,'ドロッパー',[3,7,I.redstone,1]], [HOPPER,'ホッパー',[I.iron,5,3,1]], [RED_LAMP,'レッドストーンランプ',[I.redstone,4,3,1]], [TARGET,'ターゲット',[7,1,4,4]],
+ [I.apple,'リンゴ',[4,1]], [I.bread,'パン',[7,3]],
+ [I.rail,'レール',[I.iron,6,I.stick,1]], [I.poweredRail,'パワードレール',[I.gold,6,I.stick,1,I.redstone,1]],
+ [I.detectorRail,'検知レール',[I.iron,6,3,1,I.redstone,1]], [I.activatorRail,'アクティベーターレール',[I.iron,6,I.stick,2,I.redstone,1]], [I.minecart,'トロッコ',[I.iron,5]], [CHEST,'チェスト',[7,4]], [I.bucket,'バケツ',[I.iron,3]]
+];
+function canCraft(r){const a=r[2];for(let i=0;i<a.length;i+=2)if((invCount[a[i]]||0)<a[i+1])return false;return true}
+function craft(r){if(!canCraft(r))return toast('材料が足りません');const a=r[2];for(let i=0;i<a.length;i+=2)take(a[i],a[i+1]);give(r[0]);if(!isItem(r[0])||ITEMS[r[0]].type==='block'||ITEMS[r[0]].type==='transport')hot[sel]=r[0];toast(r[1]+'を作成しました')}
+let craftCat='all';
+const CATS=[['all','すべて'],['redstone','⚡レッドストーン'],['food','🍖食料'],['block','🧱ブロック'],['transport','🚋輸送'],['weapon','⚔武器'],['tool','⛏ツール'],['armor','🛡防具'],['material','素材']];
+function recipeCat(r){const id=r[0],q=ITEMS[id];if(id===RED_DUST||id===RED_TORCH||id===REPEATER||id===LEVER||id===STONE_BUTTON||id===PRESSURE||id===PISTON||id===STICKY_PISTON||id===OBSERVER||id===DISPENSER||id===COMPARATOR||id===DROPPER||id===HOPPER||id===RED_LAMP||id===TARGET)return 'redstone';if([RAIL,POWERED_RAIL,DETECTOR_RAIL,ACTIVATOR_RAIL].includes(id)||q?.type==='transport')return 'transport';if(q?.type==='food')return 'food';if(q?.type==='weapon')return 'weapon';if(q?.type==='tool')return 'tool';if(q?.type==='armor')return 'armor';if(q?.type==='material')return 'material';if(q?.type==='block')return 'block';return 'block'}
+function drawCraft(){let t=document.getElementById('tabs'),c=document.getElementById('craft');if(!t||!c)return;t.innerHTML='';CATS.forEach(([id,n])=>{const b=document.createElement('button');b.textContent=n;b.className=craftCat===id?'on':'';b.onclick=()=>{craftCat=id;drawCraft()};t.appendChild(b)});c.innerHTML='';recipes.filter(r=>craftCat==='all'||recipeCat(r)===craftCat).forEach(r=>{const b=document.createElement('button');b.textContent=(isItem(r[0])?ITEMS[r[0]].icon+' ':'')+r[1];b.disabled=!canCraft(r);b.onclick=()=>craft(r);c.appendChild(b)})}
+
+function equip(id){const q=ITEMS[id];if(!q)return;if(q.type==='food'){const n=q.heal||3;if((invCount[id]||0)>0&&hp<20){take(id,1);hp=Math.min(20,hp+n);updateHp();toast(q.name+'を食べた（+'+n+'）')}else if(hp>=20)toast('満腹です');return}if(q.type==='block'||q.type==='transport'||q.type==='material'){hot[sel]=id;draw();return}let k=q.type==='weapon'?'weapon':q.name.includes('ヘルメット')?'helmet':q.name.includes('チェスト')?'chest':q.name.includes('レギンス')?'legs':'boots';equipped[k]=id;toast(q.name+'を装備しました');draw()}
+
+const atlasStyle=Object.assign(document.createElement('style'),{textContent:`.ic{background-image:url(${AU});image-rendering:pixelated}`});document.head.appendChild(atlasStyle);
+const ICT=id=>(id&255)===CHEST?BT[CHEST][3]:BT[id&255][1];
+const icon=id=>`<i class="ic" style="background-position:${(ICT(id)%CO)*100/(CO-1)}% ${RW>1?Math.floor(ICT(id)/CO)*100/(RW-1):0}%;background-size:${CO*100}% ${RW*100}%"></i>${id>255?`<u>${shL(id>>8)}</u>`:''}`;
+const slots=[],nmEl=document.getElementById('nm'),invEl=document.getElementById('inv');
+for(let i=0;i<9;i++){const e=document.createElement('div');e.className='s';e.onclick=()=>setSel(i);bar.appendChild(e);slots.push(e)}
+function draw(){slots.forEach((e,k)=>{const id=hot[k];e.innerHTML=`<b>${k+1}</b>`+(isItem(id)?itemIcon(id):icon(id));e.classList.toggle('on',k==sel)});if(nmEl)nmEl.textContent='選択中: '+(isItem(hot[sel])?ITEMS[hot[sel]].name:(NM[hot[sel]]||'なし'));const q=document.getElementById('equip');if(q)q.textContent='装備: 武器='+(equipped.weapon?ITEMS[equipped.weapon].name:'なし')+' / 防具='+[equipped.helmet,equipped.chest,equipped.legs,equipped.boots].filter(Boolean).length+'/4'}
+function setSel(i){sel=(i+9)%9;draw()}
+const grid=document.getElementById('grid');
+// 初期化時は旧インベントリUIのgridを参照しない。新インベントリはrenderInventory()で描画する。
+function toggleInv(){inv=!inv;invEl.style.display=inv?'flex':'none';
+ if(inv){if(document.pointerLockElement)document.exitPointerLock();requestAnimationFrame(()=>{if(inv)renderInventory()})}else{try{cv.requestPointerLock()}catch(e){}}}
+
+setSel(sel);
+if(typeof refreshSaveInfo==='function')refreshSaveInfo();
+// ---- input ----
+const keys={};addEventListener('keydown',e=>{keys[e.code]=1;if(e.code=='Escape'&&!e.repeat&&gameStarted){e.preventDefault();inv=false;invEl.style.display='none';chestKey=null;chestUI.style.display='none';save(false);pauseMenuOpen=true;pauseMenu.style.display='flex';pauseMenu.setAttribute('aria-hidden','false');if(document.pointerLockElement)document.exitPointerLock();return;}if(e.code>='Digit1'&&e.code<='Digit9')setSel(+e.code[5]-1);
+ if(e.code=='KeyE'&&!e.repeat&&msg.style.display=='none'&&!pauseMenuOpen)toggleInv();if(e.code=='KeyC'&&!e.repeat&&msg.style.display=='none'){if(!inv)toggleInv();invPage='inventory'}if(e.code=='KeyP'&&!e.repeat)save(true);if(e.code=='KeyQ'&&!e.repeat&&!inv&&msg.style.display=='none')dropSelected();if(e.code=='Space'){e.preventDefault();if(!e.repeat){const tn=performance.now();if(tn-lastSp<300&&msg.style.display=='none'&&!inv){flying=!flying;P.vy=0;toast(flying?'飛行モード ON（Space:上昇 / Shift:下降）':'飛行モード OFF')}lastSp=tn}}});
+addEventListener('keyup',e=>keys[e.code]=0);
+addEventListener('wheel',e=>{if(!inv)setSel(sel+(e.deltaY>0?1:-1))});
+const msg=document.getElementById('msg');let locked=false,fallback=false,drag=false;
+
+
+let gameStarted=false;
+const startBtn=document.getElementById('startBtn');
+const pauseMenu=document.getElementById('pauseMenu'),resumeBtn=document.getElementById('resumeBtn'),resetWorldBtn=document.getElementById('resetWorldBtn');let pauseMenuOpen=false;if(resumeBtn)resumeBtn.addEventListener('click',()=>{pauseMenuOpen=false;pauseMenu.style.display='none';pauseMenu.setAttribute('aria-hidden','true');try{cv.requestPointerLock()}catch(e){}});if(resetWorldBtn)resetWorldBtn.addEventListener('click',()=>{if(!resetWorldBtn._c){resetWorldBtn._c=1;resetWorldBtn.textContent='もう一度押すと本当に削除';return}noSave=true;try{localStorage.removeItem(SK)}catch(e){}location.reload()});
+function startGame(){
+  if(gameStarted)return;
+  gameStarted=true;
+  msg.style.display='none';
+  fallback=true;
+  try{resize()}catch(e){}
+  try{if(cv.requestPointerLock)cv.requestPointerLock()}catch(e){}
+  try{ren.render(scene,cam)}catch(e){console.error('初回描画エラー',e);toast('描画に失敗しました。ブラウザのWebGL設定を確認してください')}
+}
+if(startBtn){
+  startBtn.addEventListener('click',function(e){
+    e.preventDefault(); e.stopPropagation(); startGame();
+  },false);
+}
+document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cv;if(gameStarted&&!locked&&!fallback&&!inv)msg.style.display='none'});
+document.addEventListener('pointerlockerror',()=>{fallback=true;});
+addEventListener('mousemove',e=>{if(locked||(fallback&&drag)){P.yaw-=e.movementX*.0015*sensMul;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0015*sensMul))}});
+addEventListener('contextmenu',e=>e.preventDefault());
+function hit(x,y,z,r=R,h=HT){const jy=Math.floor(y);
+ for(let i=Math.floor(x-r);i<=Math.floor(x+r);i++)for(let j=jy-1;j<=Math.floor(y+h);j++)for(let k=Math.floor(z-r);k<=Math.floor(z+r);k++){
+  const v=getB(i,j,k);if(!solid(v)||NC[v&255])continue;
+  if(v<256&&!THIN[v]){if(j>=jy)return true;continue}
+  for(const b of boxes(v,i,j,k,false))if(x-r<i+b[3]&&x+r>i+b[0]&&y<j+b[4]&&y+h>j+b[1]&&z-r<k+b[5]&&z+r>k+b[2])return true}
+ return false}
+function hitSwim(x,y,z){
+ const r=.28,h=.72,base=y+.18,jy=Math.floor(base);
+ for(let i=Math.floor(x-r);i<=Math.floor(x+r);i++)for(let j=jy-1;j<=Math.floor(base+h);j++)for(let k=Math.floor(z-r);k<=Math.floor(z+r);k++){
+  const v=getB(i,j,k);if(!solid(v)||NC[v&255])continue;
+  if(v<256&&!THIN[v]){if(j>=jy)return true;continue}
+  for(const b of boxes(v,i,j,k,false))if(x-r<i+b[3]&&x+r>i+b[0]&&base<j+b[4]&&base+h>j+b[1]&&z-r<k+b[5]&&z+r>k+b[2])return true
+ }
+ return false}
+const hl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01,1.01,1.01)),new THREE.LineBasicMaterial({color:0}));hl.visible=false;scene.add(hl);
+let target=null;
+function ray(){const dir=rdir.set(0,0,-1).applyEuler(cam.rotation),o=cam.position;let prev=null;
+ for(let t=0;t<6;t+=.04){const x=Math.floor(o.x+dir.x*t),y=Math.floor(o.y+dir.y*t),z=Math.floor(o.z+dir.z*t);
+  if(solid(getB(x,y,z)))return{x,y,z,prev,t,hy:o.y+dir.y*t-y};
+  if(!prev||prev[0]!=x||prev[1]!=y||prev[2]!=z)prev=[x,y,z]}return null}
+addEventListener('mousedown',e=>{
+ if(msg.style.display!='none'||inv||(e.target.closest&&e.target.closest('#bar')))return;drag=true;if(!(locked||fallback))return;
+ if(e.button==0){const mh=pickMob();if(mh&&(!target||mh.t<target.t)){attack(mh.m);return}}
+ if(e.button==2){const hid=hot[sel];if(hid===I.bucket||hid===I.waterBucket||hid===I.lavaBucket){bucketUse(hid);return}}
+ if(!target)return;const{x,y,z,prev,hy}=target;
+ if(e.button==0){if(getB(x,y,z)==10)return;let broken=getB(x,y,z);setB(x,y,z,0);if(broken>255&&AXB[broken&255])broken&=255;if(RSB.has(broken&255)||(broken&255)===CHEST)breakRS(x,y,z,broken);else if(broken&&broken<256){if(broken===RED_DUST)give(I.redstone,1);else if(broken===12||broken===13)give(I.iron,1);else if(broken===14)give(I.diamond,1);else give(broken,1);if(broken===5&&Math.random()<.10)spawnDrop(I.apple,1,x+.5,y+.7,z+.5)}}
+ else if(e.button==2){const tv=getB(x,y,z);if(!(keys.ShiftLeft||keys.ShiftRight)){if(CONTB.has(tv&255)&&((tv&255)!==CHEST||tv>255)){openChest(x,y,z);return}if(rsUse(tv,x,y,z))return}
+  if((tv&255)===LEVER){const on=(tv>>8)!==1;setB(x,y,z,LEVER|(on?256:0));toast(on?'レバー ON':'レバー OFF');return}
+  if((tv&255)===STONE_BUTTON|| (tv&255)===PRESSURE){toast('レッドストーン信号を発生！');return}
+  if((tv>>8)>=13&&(tv>>8)<29){setB(x,y,z,(tv&255)|((13+((tv>>8)-13^4))<<8));return}
+  if(!prev)return;const[a,b,c]=prev;let id=hot[sel];if(isItem(id)){if(id===I.redstone){if(take(I.redstone,1))setB(a,b,c,RED_DUST);return}const bm={[I.rail]:RAIL,[I.poweredRail]:POWERED_RAIL,[I.detectorRail]:DETECTOR_RAIL,[I.activatorRail]:ACTIVATOR_RAIL};if(bm[id]&&take(id,1)){setB(a,b,c,bm[id]);return}toast(ITEMS[id].name+'はここには置けません');return}if(b<0||b>=H)return;
+  const base=id&255,sh=id>>8,dyn=b-y,half=dyn<0?1:dyn>0?0:(hy>.5?1:0),pf=((Math.round(-P.yaw/(Math.PI/2))%4)+4)%4;
+  if(base===CHEST&&sh===0)id=CHEST|((29+((pf+2)&3))<<8);else if(RSB.has(base)&&sh===0)id=rsPlace(base,pf,a,b,c,x,y,z);else if(AXB[base]&&sh===0)id=(a!==x)?base|(1<<8):(c!==z)?base|(2<<8):base;else if(sh>=1&&sh<=8)id=base|((1+pf+4*half)<<8);
+  else if(sh==9||sh==10){if((tv&255)==base&&((tv>>8)==9&&dyn>0||(tv>>8)==10&&dyn<0)){setB(x,y,z,base);return}id=base|((9+half)<<8)}
+  else if(sh>=13)id=base|((13+pf+8*half)<<8);
+  if(solid(id)&&!NC[id&255]&&a<P.x+R&&a+1>P.x-R&&b<P.y+HT&&b+1>P.y&&c<P.z+R&&c+1>P.z-R)return;setB(a,b,c,id);if(id===SPG)spongeAbsorb(a,b,c)}});
+addEventListener('mouseup',()=>{drag=false;rightPlaceHeld=false;clearInterval(rightPlaceTimer);rightPlaceTimer=0;leftBreakHeld=false;clearInterval(leftBreakTimer);leftBreakTimer=0});
+// 左ボタン長押し中は、狙っているブロックの破壊操作を一定間隔で繰り返す
+let leftBreakHeld=false,leftBreakTimer=0;
+addEventListener('mousedown',e=>{
+ if(e.button!==0||msg.style.display!=='none'||inv||!(locked||fallback)||(e.target.closest&&e.target.closest('#bar')))return;
+ leftBreakHeld=true;clearInterval(leftBreakTimer);
+ leftBreakTimer=setInterval(()=>{
+  if(!leftBreakHeld||msg.style.display!=='none'||inv||!(locked||fallback)||!target)return;
+  const mh=pickMob();if(mh&&(!target||mh.t<target.t))return;
+  const ev=new MouseEvent('mousedown',{button:0,bubbles:true,cancelable:true});dispatchEvent(ev);
+ },180);
+});
+// 右ボタン長押し中は、通常ブロックへの設置操作だけを一定間隔で繰り返す
+let rightPlaceHeld=false,rightPlaceTimer=0;
+addEventListener('mousedown',e=>{
+ if(e.button!==2||msg.style.display!=='none'||inv||!(locked||fallback))return;
+ rightPlaceHeld=true;clearInterval(rightPlaceTimer);
+ rightPlaceTimer=setInterval(()=>{
+  if(!rightPlaceHeld||msg.style.display!=='none'||inv||!(locked||fallback)||!target)return;
+  const tv=getB(target.x,target.y,target.z)&255;
+  if(CONTB.has(tv)||tv===LEVER||tv===STONE_BUTTON||tv===PRESSURE||tv===RED_DUST||tv===REPEATER||tv===COMPARATOR||tv===OBSERVER||tv===DISPENSER||tv===DROPPER)return;
+  const ev=new MouseEvent('mousedown',{button:2,bubbles:true,cancelable:true});dispatchEvent(ev);
+ },180);
+});
+
+// ---- チェスト（27スロット・スタック上限64・セーブ対応） ----
+const chestUI=document.getElementById('chestUI'),chestBody=document.getElementById('chestBody');let chestKey=null;
+function openChest(x,y,z){chestKey=x+','+y+','+z;const bsx=getB(x,y,z)&255;if(!chests[chestKey])chests[chestKey]=Array(CONTB.get(bsx)||27).fill(null);chestUI.querySelector('h2').textContent=NMS[bsx]||'チェスト';inv=true;invEl.style.display='none';chestUI.style.display='flex';if(document.pointerLockElement)document.exitPointerLock();renderChest()}
+function closeChest(){chestKey=null;chestUI.style.display='none';inv=false;try{cv.requestPointerLock()}catch(e){}}
+function breakChest(x,y,z){const k=x+','+y+','+z,ch=chests[k];if(ch)for(const sl of ch)if(sl)spawnDrop(sl[0],sl[1],x+.5,y+.7,z+.5);delete chests[k];give(CHEST,1)}
+function chestPut(id,all){const ch=chests[chestKey];if(!ch||!(invCount[id]>0))return;let n=all?Math.min(invCount[id],64):1,moved=0;
+ for(const sl of ch)if(sl&&sl[0]===id&&sl[1]<64&&n>moved){const m=Math.min(64-sl[1],n-moved);sl[1]+=m;moved+=m}
+ for(let i=0;i<ch.length&&moved<n;i++)if(!ch[i]){const m=Math.min(64,n-moved);ch[i]=[id,m];moved+=m}
+ if(!moved)return toast('チェストがいっぱいです');take(id,moved);renderChest()}
+function chestGet(i,all){const ch=chests[chestKey],sl=ch&&ch[i];if(!sl)return;const n=all?sl[1]:1;give(sl[0],n);sl[1]-=n;if(sl[1]<=0)ch[i]=null;renderChest()}
+function renderChest(){const ch=chests[chestKey];if(!ch)return;chestBody.innerHTML='';
+ const t1=document.createElement('div');t1.className='invTitle';t1.textContent='チェストの中身';chestBody.appendChild(t1);
+ const g1=document.createElement('div');g1.className='chGrid';
+ ch.forEach((sl,i)=>{const e=document.createElement('div');e.className='it';if(sl){e.title=ITEMS[sl[0]]?ITEMS[sl[0]].name:(NM[sl[0]]||'');e.innerHTML=invIcon(sl[0]).replace(/<u>.*?<\/u>/,'')+`<u>${sl[1]}</u>`}
+  e.onclick=()=>chestGet(i,true);e.oncontextmenu=ev=>{ev.preventDefault();chestGet(i,false)};g1.appendChild(e)});chestBody.appendChild(g1);
+ const t2=document.createElement('div');t2.className='invTitle';t2.textContent='持ち物（クリックでチェストへ）';chestBody.appendChild(t2);
+ const g2=document.createElement('div');g2.className='chGrid';
+ Object.keys(invCount).map(Number).filter(id=>invCount[id]>0).forEach(id=>{const e=document.createElement('div');e.className='it';e.title=ITEMS[id]?ITEMS[id].name:(NM[id]||'');e.innerHTML=invIcon(id).replace(/<u>.*?<\/u>/,'')+`<u>${invCount[id]}</u>`;
+  e.onclick=()=>chestPut(id,true);e.oncontextmenu=ev=>{ev.preventDefault();chestPut(id,false)};g2.appendChild(e)});chestBody.appendChild(g2)}
+// ---- dropped items ----
+const droppedItems=[],DG=new THREE.BoxGeometry(.22,.22,.22),DMs={},dropMat=c=>DMs[c]||(DMs[c]=new THREE.MeshLambertMaterial({color:c}));
+const dropColors={};
+function itemColor(id){
+ const q=ITEMS[id];
+ if(q?.type==='food')return 0xc88a3a;
+ if(q?.type==='weapon')return 0xaaaaaa;
+ if(q?.type==='tool')return 0x777777;
+ if(q?.type==='armor')return 0x888888;
+ if(q?.type==='material')return 0xb050d0;
+ return 0x8b8b8b;
+}
+function spawnDrop(id,n,x,y,z,vx=0,vz=0,vy0=1.8){
+ if(!n)return;
+ const g=new THREE.Group();
+ const m=new THREE.Mesh(DG,dropMat(itemColor(id)));
+ g.add(m);scene.add(g);
+ droppedItems.push({id,n,g,x,y,z,vy:vy0,vx,vz,t:Math.random()*6.28,spin:1.6,gt:0,gy:y,age:0});
+}
+function dropSelected(){
+ const id=hot[sel];
+ if(id==null)return;
+ if(!ITEMS[id] && !(invCount[id]>0)){toast('落とせるアイテムがありません');return}
+ if(!take(id,1))return;
+ spawnDrop(id,1,P.x+Math.sin(P.yaw)*.8,P.y+1.0,P.z+Math.cos(P.yaw)*.8);
+ toast((ITEMS[id]?.name||'アイテム')+'を落としました');
+}
+function dropTick(dt){
+ for(let i=droppedItems.length-1;i>=0;i--){
+  const d=droppedItems[i];d.t+=dt*d.spin;if((d.age+=dt)>240){scene.remove(d.g);droppedItems.splice(i,1);continue}
+  if((d.gt-=dt)<=0){d.gt=.5;d.gy=surfY(Math.floor(d.x),Math.floor(d.z))+1.05}const gy=d.gy;
+  d.y+=d.vy*dt;d.vy-=12*dt;if(d.vx||d.vz){d.x+=d.vx*dt;d.z+=d.vz*dt;const fr=Math.max(0,1-3*dt);d.vx*=fr;d.vz*=fr}
+  if(d.y<gy){d.y=gy;d.vy=0}
+  updFlow(d,Math.floor(d.x),[d.y-.2,d.y-1.1,d.y-1.9],Math.floor(d.z),dt);if(d.fx||d.fz){const nx=d.x+d.fx*dt,nz=d.z+d.fz*dt,fy=Math.floor(d.y-.5);if(!solid(getB(Math.floor(nx),fy,Math.floor(d.z))))d.x=nx;if(!solid(getB(Math.floor(d.x),fy,Math.floor(nz))))d.z=nz}
+  d.g.position.set(d.x,d.y+.12*Math.sin(d.t*2),d.z);d.g.rotation.y=d.t;
+  if(Math.hypot(d.x-P.x,d.y-P.y,d.z-P.z)<1.45){give(d.id,d.n);scene.remove(d.g);droppedItems.splice(i,1);toast((ITEMS[d.id]?.name||'アイテム')+'を拾った')}
+ }
+}
+// ---- mobs ----
+const rdir=new THREE.Vector3(),mobs=[];
+const ambientLight=new THREE.AmbientLight(0xffffff,.8);scene.add(ambientLight);
+const dl=new THREE.DirectionalLight(0xffffff,.5);dl.position.set(.4,1,.6);scene.add(dl);
+// ---- ブロック光：6方向への減衰伝播 + 頂点のスムースライティング + ブロック隅のAO ----
+const shroomId=nmid('シュルームライト'), glowstoneId=nmid('グロウストーン'), lampLightSprites=new Map();
+let lampGlowClock=0;
+function isLightSource(v){const id=v&255;return id===shroomId||id===glowstoneId||(id===RED_LAMP&&v>255);}
+function lightKey(x,y,z){return x+','+y+','+z}
+function rebuildBlockLight(){
+ blockLightCache=new Map();const q=[];
+ // Scan loaded world chunks for emissive blocks, seed at level 15.
+ for(const c of C.values()){if(!c||!c.d)continue;
+  for(let y=0;y<c.top;y++)for(let z=0;z<16;z++)for(let x=0;x<16;x++){
+   const v=c.d[x+16*(z+16*y)];if(!isLightSource(v))continue;
+   const gx=c.cx*16+x,gz=c.cz*16+z,k=lightKey(gx,y,gz);
+   if((blockLightCache.get(k)||0)<15){blockLightCache.set(k,15);q.push([gx,y,gz,15])}
+  }
+ }
+ // Breadth-first propagation through the six axis-adjacent cells. Opaque
+ // boundary blocks stop propagation; the strongest route wins.
+ for(let head=0;head<q.length;head++){
+  const [x,y,z,l]=q[head];if(l<=1)continue;
+  for(const [dx,dy,dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){
+   const nx=x+dx,ny=y+dy,nz=z+dz;if(ny<0||ny>=H)continue;
+   const nc=C.get(ck(nx>>4,nz>>4));const v=nc?nc.d[idx(nx&15,ny,nz&15)]:0;if(v&&occl(v))continue;
+   const nl=l-1,k=lightKey(nx,ny,nz);if(nl<=(blockLightCache.get(k)||0))continue;
+   blockLightCache.set(k,nl);q.push([nx,ny,nz,nl]);
+  }
+ }
+ blockLightDirty=false;
+}
+function blockLightAt(x,y,z){if(!lightSystemReady)return 0;return (blockLightCache.get(lightKey(Math.floor(x),Math.floor(y),Math.floor(z)))||0)/15}
+function blockAO(x,y,z,nx,ny,nz){
+ // Approximate corner occlusion from the two side-neighbours and their corner.
+ const ax=x+nx,ay=y+ny,az=z+nz;
+ const occ=(dx,dy,dz)=>occl(getB(ax+dx,ay+dy,az+dz))?1:0;
+ return 1-(occ(0,0,0)*.18);
+}
+function updateBlockGlows(dt){
+ lightSystemReady=true;lampGlowClock-=dt;if(!blockLightDirty&&lampGlowClock>0)return;lampGlowClock=.3;
+ if(blockLightDirty){
+  rebuildBlockLight();
+  // 光源を直接変更した周辺チャンクだけを再メッシュする。全チャンクの
+  // 一括再生成はFPS低下の原因になるため避ける。
+  const refresh=[...lightMeshDirty];lightMeshDirty.clear();
+  for(const key of refresh){const c=C.get(key);if(c&&c.v)mesh(c)}
+ }
+ // No point sprites/particles: the world mesh itself receives the light field.
+ for(const [key,light] of lampLightSprites){scene.remove(light);if(light.dispose)light.dispose();lampLightSprites.delete(key)}
+}
+const GC={},MC={},bxm=(w,h,d,c)=>new THREE.Mesh(GC[w+','+h+','+d]||(GC[w+','+h+','+d]=new THREE.BoxGeometry(w,h,d)),MC[c]||(MC[c]=new THREE.MeshStandardMaterial({color:c,roughness:1,metalness:0,emissive:0x000000,emissiveIntensity:0})));
+const at=(m,x,y,z)=>{m.position.set(x,y,z);return m};
+function leg(g,x,y,z,w,h,d,c){const p=new THREE.Group();p.position.set(x,y,z);p.add(at(bxm(w,h,d,c),0,-h/2,0));g.add(p);return p}
+const four=(g,x,y,z,w,h,c)=>[[x,z],[x,-z],[-x,z],[-x,-z]].map(([a,b])=>leg(g,a,y,b,w,h,w,c));
+const MT={
+ pig:{w:.8,h:.9,hp:10,sp:1.6,drops:[[I.pork,1,1]],b(g){g.add(at(bxm(.62,.5,.9,0xf0a0aa),0,.62,0),at(bxm(.5,.45,.45,0xf0a0aa),0,.72,.62),at(bxm(.26,.18,.1,0xdc828c),0,.66,.88));return four(g,.2,.37,.3,.2,.37,0xe08f99)}},
+ cow:{w:.9,h:1.4,hp:10,sp:1.3,drops:[[I.beef,1,1],[I.leather,1,.5]],b(g){g.add(at(bxm(.7,.6,1.1,0x5a3d2b),0,1,0),at(bxm(.72,.3,.5,0xe8e8e8),0,1.05,-.2),at(bxm(.5,.5,.4,0x5a3d2b),0,1.25,.75),at(bxm(.34,.22,.1,0xd8c4b0),0,1.15,.97),at(bxm(.08,.15,.08,0xeeeeee),.22,1.55,.7),at(bxm(.08,.15,.08,0xeeeeee),-.22,1.55,.7));return four(g,.22,.7,.4,.22,.7,0x4a3222)}},
+ sheep:{w:.9,h:1.3,hp:8,sp:1.3,drops:[[I.mutton,1,1],[I.leather,1,.4]],b(g){g.add(at(bxm(.8,.7,1,0xeeeeee),0,1,0),at(bxm(.4,.4,.45,0xcdb08c),0,1.2,.7));return four(g,.22,.65,.3,.2,.65,0xcdb08c)}},
+ chicken:{w:.4,h:.7,hp:4,sp:1.4,drops:[[I.chicken,1,1],[I.feather,1,.5]],b(g){g.add(at(bxm(.35,.35,.5,0xffffff),0,.45,0),at(bxm(.2,.3,.2,0xffffff),0,.75,.25),at(bxm(.12,.08,.12,0xf0b020),0,.7,.4),at(bxm(.06,.1,.06,0xd02020),0,.62,.38));return[leg(g,.1,.28,0,.05,.28,.05,0xf0b020),leg(g,-.1,.28,0,.05,.28,.05,0xf0b020)]}},
+ zombie:{w:.6,h:1.95,hp:20,sp:2.2,host:1,drops:[[I.rotten,1,.7]],b(g){const sk=0x5a9a46;g.add(at(bxm(.52,.75,.26,0x2aa0b0),0,1.12,0),at(bxm(.5,.5,.5,sk),0,1.75,0),at(bxm(.1,.08,.02,0x101040),.12,1.78,.26),at(bxm(.1,.08,.02,0x101040),-.12,1.78,.26));
+  for(const sx of[.39,-.39]){const a=new THREE.Group();a.position.set(sx,1.45,0);a.rotation.x=-1.45;a.add(at(bxm(.26,.75,.26,sk),0,-.375,0));g.add(a)}
+  return[leg(g,.14,.75,0,.26,.75,.26,0x2f3a82),leg(g,-.14,.75,0,.26,.75,.26,0x2f3a82)]}},
+ creeper:{w:.6,h:1.7,hp:20,sp:1.9,host:1,cr:1,drops:[[I.gunpowder,1,.7]],b(g){const c=0x4cae3c;g.add(at(bxm(.5,.75,.3,c),0,.85,0),at(bxm(.5,.5,.5,c),0,1.45,0),at(bxm(.12,.12,.02,0x101010),.13,1.52,.26),at(bxm(.12,.12,.02,0x101010),-.13,1.52,.26),at(bxm(.1,.2,.02,0x101010),0,1.35,.26));return four(g,.15,.475,.2,.22,.475,0x3d9030)}},
+ skeleton:{w:.6,h:1.95,hp:20,sp:2.0,host:1,rng:1,drops:[[I.bone,1,.9],[I.arrow,1,.7]],b(g){const bn=0xdcdccc,sd=0xb4b4a2,dk=0x151515;
+  g.add(at(bxm(.1,.72,.1,sd),0,1.12,0),at(bxm(.3,.1,.14,bn),0,.78,0));
+  for(const y of[1.42,1.28,1.14,1.0])g.add(at(bxm(.46,.06,.2,bn),0,y,0));
+  g.add(at(bxm(.5,.5,.5,bn),0,1.75,0),at(bxm(.13,.13,.02,dk),.13,1.8,.26),at(bxm(.13,.13,.02,dk),-.13,1.8,.26),at(bxm(.06,.08,.02,dk),0,1.7,.26),at(bxm(.3,.06,.02,dk),0,1.6,.26));
+  for(const x of[-.1,0,.1])g.add(at(bxm(.05,.05,.025,bn),x,1.6,.265));
+  for(const sx of[.3,-.3]){const a=new THREE.Group();a.position.set(sx,1.45,0);a.rotation.x=-1.45;a.add(at(bxm(.12,.7,.12,bn),0,-.35,0));g.add(a)}
+  g.add(at(bxm(.04,.8,.06,0x6b4a22),.3,1.5,.75),at(bxm(.01,.75,.01,0xdddddd),.3,1.5,.72));
+  return[leg(g,.1,.75,0,.12,.75,.12,bn),leg(g,-.1,.75,0,.12,.75,.12,sd)]}}};
+function addMob(type,x,y,z){const T=MT[type],g=new THREE.Group(),legs=T.b(g);scene.add(g);mobs.push({T,g,legs,x,y,z,vy:0,yaw:Math.random()*6.28,hp:T.hp,t:0,wp:0,turn:0,go:false,kx:0,kz:0,fleeT:0,fuse:0,atk:.5,sh:1.5,ground:false})}
+function rmMob(m){scene.remove(m.g);mobs.splice(mobs.indexOf(m),1)}
+function updateHp(){const e=document.getElementById('hp');if(e)e.textContent='♥'.repeat(Math.max(0,Math.ceil(hp/2)))}
+function hurt(d){const ar=[equipped.helmet,equipped.chest,equipped.legs,equipped.boots].filter(Boolean).reduce((a,id)=>a+ITEMS[id].damage,0);d=Math.max(1,Math.round(d*(1-Math.min(.7,ar/40))));hp-=d;if(hp<=0){toast('やられた！ リスポーンします');respawn();for(const m of mobs.slice())if(m.T.host)rmMob(m)}updateHp()}
+function explode(m){const cx=Math.floor(m.x),cy=Math.floor(m.y+.5),cz=Math.floor(m.z),ch=new Set();
+ for(let dx=-3;dx<=3;dx++)for(let dy=-3;dy<=3;dy++)for(let dz=-3;dz<=3;dz++){if(dx*dx+dy*dy+dz*dz>10)continue;
+  const x=cx+dx,y=cy+dy,z=cz+dz;if(y<1||y>=H)continue;const v=getB(x,y,z);if(!v||v==10||FL[v&255])continue;
+  const c=getC(x>>4,z>>4);if(!c)continue;const i=idx(x&15,y,z&15),k=ck(x>>4,z>>4);c.d[i]=0;
+  let e=edits.get(k);if(!e)edits.set(k,e=new Map());e.set(i,0);ch.add(c)}
+ const all=new Set();ch.forEach(c=>{for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const o=C.get(ck(c.cx+a,c.cz+b));if(o&&o.v)all.add(o)}});all.forEach(c=>mesh(c));
+ const d=Math.hypot(P.x-m.x,P.y-m.y,P.z-m.z);if(d<6)hurt(Math.round((6-d)*3));rmMob(m)}
+function stepMob(m,dt){const T=m.T,dx=P.x-m.x,dz=P.z-m.z,dist=Math.hypot(dx,dz);let mv=0;m.t+=dt;
+ if(T.host&&dist<20&&Math.abs(P.y-m.y)<8){m.yaw=Math.atan2(dx,dz);mv=T.sp;
+  if(T.cr){if(dist<2.6){mv=0;if(!m.fuse)m.fuse=1.4}else if(dist>4.5)m.fuse=0}
+  else if(T.rng){if(dist<5)mv=-T.sp*.8;else if(dist<11)mv=0;m.sh-=dt;if(m.sh<=0&&dist<17){m.sh=1.6+Math.random()*.8;shoot(m)}}
+  else if(dist<1.2&&Math.abs(P.y-m.y)<1.7){mv=0;m.atk-=dt;if(m.atk<=0){m.atk=1;hurt(3)}}}
+ else{m.turn-=dt;if(m.turn<=0){m.turn=2+Math.random()*4;m.go=Math.random()<.6;m.yaw=Math.random()*6.283}
+  mv=m.fleeT>0?T.sp*2:m.go?T.sp*.6:0;m.fleeT-=dt}
+ if(m.fuse>0){m.fuse-=dt;m.g.scale.setScalar(1+Math.sin(m.fuse*30)*.08);if(m.fuse<=0){explode(m);return}}
+ const r=T.w/2,h=T.h,iw=isW(getB(Math.floor(m.x),Math.floor(m.y+.3),Math.floor(m.z)));
+ if(iw)m.vy=Math.min(m.vy+30*dt,2.5);else m.vy-=26*dt;if(m.vy<-30)m.vy=-30;
+ updFlow(m,Math.floor(m.x),[m.y+.3,m.y+.9],Math.floor(m.z),dt);const vx=Math.sin(m.yaw)*mv+m.kx+m.fx,vz=Math.cos(m.yaw)*mv+m.kz+m.fz;m.kx*=Math.max(0,1-5*dt);m.kz*=Math.max(0,1-5*dt);
+ let bl=false;const nx=m.x+vx*dt;if(!hit(nx,m.y,m.z,r,h))m.x=nx;else bl=true;
+ const nz=m.z+vz*dt;if(!hit(m.x,m.y,nz,r,h))m.z=nz;else bl=true;
+ if(bl&&m.ground&&mv>0)m.vy=8.5;
+ m.ground=false;const ny=m.y+m.vy*dt;if(!hit(m.x,ny,m.z,r,h))m.y=ny;else{if(m.vy<0){const impact=-m.vy;m.ground=true;if(slimeUnder(m.x,m.y,m.z,r))m.vy=impact*Math.SQRT1_2;else m.vy=0}else m.vy=0}
+ if(m.y<1){rmMob(m);return}
+ m.wp+=mv*dt*5;m.legs.forEach((l,i)=>l.rotation.x=mv?Math.sin(m.wp)*.8*((i==0||i==3)?1:-1):0);
+ m.g.position.set(m.x,m.y,m.z);m.g.rotation.y=m.yaw}
+function pickMob(){const o=cam.position;let best=null;
+ for(const m of mobs){const vx=m.x-o.x,vy=m.y+m.T.h/2-o.y,vz=m.z-o.z,t=vx*rdir.x+vy*rdir.y+vz*rdir.z;if(t<0||t>4.5)continue;
+  const d2=vx*vx+vy*vy+vz*vz-t*t,rr=Math.max(m.T.w,m.T.h*.6)/2+.1;if(d2<rr*rr&&(!best||t<best.t))best={m,t}}return best}
+function attack(m){const wi=equipped.weapon,damage=wi?ITEMS[wi].damage:5;m.hp-=damage;m.kx=-Math.sin(P.yaw)*(wi?9:7);m.kz=-Math.cos(P.yaw)*(wi?9:7);m.vy=5;if(wi&&ITEMS[wi].dur>0)ITEMS[wi].dur--;if(!m.T.host){m.fleeT=3;m.yaw=P.yaw+Math.PI}if(m.hp<=0){const drops=m.T.drops||[];const mx=m.x,my=m.y+0.8,mz=m.z;rmMob(m);for(const d of drops){if(Math.random()<=d[2])spawnDrop(d[0],d[1]||1,mx,my,mz)}}}
+function spawnMob(){if(mobs.length>=10)return;const a=Math.random()*6.283,d=22+Math.random()*22,x=Math.floor(P.x+Math.cos(a)*d),z=Math.floor(P.z+Math.sin(a)*d);
+ if(Math.abs(x)>7990||Math.abs(z)>7990)return;const y=surfY(x,z);if(getB(x,y,z)||getB(x,y+1,z))return;const gb=getB(x,y-1,z);
+ const host=Math.random()<.4;
+ const monsterGround=(gb===1||NMS[gb]==='雪ブロック'||NMS[gb]==='草ブロック');
+ // 敵MOBは夜（昼の10分が終わった後の10分間）だけスポーンする。
+ // 昼・朝・夕方には敵を新しく出さず、動物MOBだけ通常どおりスポーンさせる。
+ const phase=worldClock/TOTAL_CYCLE;
+ const isNight=phase>=.5;
+ if(host){if(!isNight)return;if(!monsterGround)return;if(mobs.filter(m=>m.T.host).length>=3)return;addMob(['zombie','creeper','skeleton'][Math.floor(Math.random()*3)],x+.5,y,z+.5)}
+ else{if(gb!=1)return;addMob(['pig','cow','sheep','chicken'][Math.floor(Math.random()*4)],x+.5,y,z+.5)}}
+let spT=-4,hpT=0;
+function mobTick(dt){spT+=dt;if(spT>2){spT=0;spawnMob()}
+ hpT+=dt;if(hpT>4&&hp<20){hp++;hpT=0;updateHp()}
+ for(const m of mobs.slice()){if(Math.hypot(m.x-P.x,m.z-P.z)>60){rmMob(m);continue}stepMob(m,dt)}}
+updateHp();
+// ---- 矢 ----
+const arrows=[],AG=new THREE.BoxGeometry(.05,.05,.7),AM=new THREE.MeshLambertMaterial({color:0x8a6a3a});
+function shoot(m){const x=m.x,y=m.y+1.5,z=m.z,dx=P.x-x,dy=P.y+1.2-y,dz=P.z-z,d=Math.hypot(dx,dy,dz),t=d/18,r=()=>(Math.random()-.5)*1.2;
+ const g=new THREE.Mesh(AG,AM);scene.add(g);arrows.push({g,x,y,z,vx:dx/t+r(),vy:dy/t+5*t+r(),vz:dz/t+r(),life:6})}
+function arrowTick(dt){for(let i=arrows.length-1;i>=0;i--){const a=arrows[i];a.life-=dt;a.vy-=10*dt;a.x+=a.vx*dt;a.y+=a.vy*dt;a.z+=a.vz*dt;
+ const bx0=Math.floor(a.x),by0=Math.floor(a.y),bz0=Math.floor(a.z),bv0=getB(bx0,by0,bz0);let dead=a.life<=0||solid(bv0);if(dead&&(bv0&255)===TARGET)targetHit(bx0,by0,bz0,a);if(!dead&&a.own)for(const m of mobs)if(Math.abs(m.x-a.x)<m.T.w/2+.25&&Math.abs(m.z-a.z)<m.T.w/2+.25&&a.y>m.y&&a.y<m.y+m.T.h){m.hp-=5;if(m.hp<=0)rmMob(m);dead=true;break}
+ if(!dead&&!a.own&&Math.abs(a.x-P.x)<.45&&Math.abs(a.z-P.z)<.45&&a.y>P.y&&a.y<P.y+1.9){hurt(2+Math.round(Math.random()*2));dead=true}
+ if(dead){scene.remove(a.g);arrows.splice(i,1);continue}
+ a.g.position.set(a.x,a.y,a.z);a.g.lookAt(a.x+a.vx,a.y+a.vy,a.z+a.vz)}}
+// ---- 雲（高度 y=100〜104・ゆっくり流れる） ----
+const CLD={cs:12,y:100,h:4,R:22,ci:1e9,cj:1e9,m:null,off:0},cloudMat=new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,transparent:true,opacity:.9,fog:false,depthWrite:false});
+const cloudAt=(i,j)=>vn(i/3.5+21.7,j/3.5+9.3)>.54||hs(i*.7,j*1.3)>.985;
+function buildClouds(ci,cj){const R=CLD.R,w=2*R+3,on=new Uint8Array(w*w),at=(i,j)=>on[(j+R+1)*w+(i+R+1)];
+ for(let j=-R-1;j<=R+1;j++)for(let i=-R-1;i<=R+1;i++)on[(j+R+1)*w+(i+R+1)]=cloudAt(ci+i,cj+j)?1:0;
+ const p=[],c=[],ix=[];let k=0;const cs=CLD.cs;
+ const quad=(a,sh)=>{for(const q of a){p.push(q[0],q[1],q[2]);c.push(sh,sh,sh)}ix.push(k,k+1,k+2,k,k+2,k+3);k+=4};
+ for(let j=-R;j<=R;j++)for(let i=-R;i<=R;i++){if(!at(i,j))continue;const x0=(ci+i)*cs,x1=x0+cs,z0=(cj+j)*cs,z1=z0+cs,y0=CLD.y,y1=y0+CLD.h;
+  quad([[x0,y1,z0],[x0,y1,z1],[x1,y1,z1],[x1,y1,z0]],1);quad([[x0,y0,z1],[x0,y0,z0],[x1,y0,z0],[x1,y0,z1]],.72);
+  if(!at(i+1,j))quad([[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1]],.86);
+  if(!at(i-1,j))quad([[x0,y0,z1],[x0,y1,z1],[x0,y1,z0],[x0,y0,z0]],.86);
+  if(!at(i,j+1))quad([[x1,y0,z1],[x1,y1,z1],[x0,y1,z1],[x0,y0,z1]],.8);
+  if(!at(i,j-1))quad([[x0,y0,z0],[x0,y1,z0],[x1,y1,z0],[x1,y0,z0]],.8)}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));g.setIndex(ix);
+ if(CLD.m){scene.remove(CLD.m);CLD.m.geometry.dispose()}
+ const m=new THREE.Mesh(g,cloudMat);m.position.x=CLD.off;m.frustumCulled=false;m.renderOrder=2;scene.add(m);CLD.m=m;m.visible=!uw}
+function cloudTick(dt){CLD.off+=dt*1.5;const ci=Math.floor((P.x-CLD.off)/CLD.cs),cj=Math.floor(P.z/CLD.cs);
+ if(!CLD.m||Math.abs(ci-CLD.ci)>5||Math.abs(cj-CLD.cj)>5){CLD.ci=ci;CLD.cj=cj;buildClouds(ci,cj)}else CLD.m.position.x=CLD.off}
+// ================= レッドストーン回路エンジン（10Hz = 0.1秒/tick） =================
+const D6=[...D4,[0,1,0],[0,-1,0]];function rk(x,y,z){return x+','+y+','+z}
+let DL=new Map(),EM=new Map(),rsAcc=0;const primed=[],anims=[],fxs=[];
+function rsReg(x,y,z,old,nw){const k=rk(x,y,z);if(nw&&RSB.has(nw&255)){if(!RS.has(k))RS.set(k,{x,y,z})}else RS.delete(k)}
+function scanRS(){edits.forEach((m,k)=>{const cx=Math.floor(k/1024)-512,cz=k%1024-512;m.forEach((v,i)=>{if(v&&RSB.has(v&255)){const x=cx*16+(i&15),z=cz*16+((i>>4)&15),y=i>>8;RS.set(rk(x,y,z),{x,y,z})}})})}
+// セーブ復元は必要な状態・関数の宣言後に行う。読み込み失敗時は新規ワールドで開始。
+loaded=load();
+for(let i=0;i<hot.length;i++)if(hot[i]===22)hot[i]=1;
+delete invCount[22]; blockLightDirty=true;
+if(loaded){try{scanRS()}catch(e){console.warn('scanRS',e)}}else{respawn();give(4,12);give(8,24);give(I.stick,12);give(I.iron,8);give(I.diamond,4);give(I.redstone,16);give(1,16);give(3,16)}
+function applyChanges(ch){const sc=new Set();
+ for(const[x,y,z,v]of ch){const cx=x>>4,cz=z>>4,c=getC(cx,cz);if(!c||y<0||y>=H)continue;const lx=x&15,lz=z&15,i=idx(lx,y,lz),old=c.d[i];if(old===v)continue;
+  c.d[i]=v;if(v&&y+1>c.top)c.top=y+1;let e=edits.get(ck(cx,cz));if(!e)edits.set(ck(cx,cz),e=new Map());e.set(i,v);rsReg(x,y,z,old,v);fluidDirty(x,y,z,old,v);sc.add(c);
+  if(lx==0)sc.add(getC(cx-1,cz));if(lx==15)sc.add(getC(cx+1,cz));if(lz==0)sc.add(getC(cx,cz-1));if(lz==15)sc.add(getC(cx,cz+1))}
+ sc.forEach(c=>{if(c&&c.v)mesh(c)})}
+const contAt=(x,y,z)=>{const bs=getB(x,y,z)&255;if(!CONTB.has(bs))return null;const k=rk(x,y,z);return chests[k]||(chests[k]=Array(CONTB.get(bs)).fill(null))};
+function contInsert(a,id,n){let left=n;for(const sl of a)if(sl&&sl[0]===id&&sl[1]<64&&left){const m=Math.min(64-sl[1],left);sl[1]+=m;left-=m}
+ for(let i=0;i<a.length&&left;i++)if(!a[i]){const m=Math.min(64,left);a[i]=[id,m];left-=m}return left===0}
+function contLevel(x,y,z){const bs=getB(x,y,z)&255;if(!CONTB.has(bs))return-1;const a=chests[rk(x,y,z)];if(!a)return 0;let sum=0,any=0;for(const sl of a)if(sl){any=1;sum+=sl[1]/64}return any?Math.floor(sum/a.length*14)+1:0}
+function outAt(x,y,z,tx,tz){const v=getB(x,y,z),bs=v&255,s=v>>8,c=RS.get(rk(x,y,z));
+ switch(bs){case RED_DUST:return DL.get(rk(x,y,z))||0;case RBLK:case RED_TORCH:return 15;case LEVER:return s&1?15:0;
+  case STONE_BUTTON:return c&&c.tm>0?15:0;case PRESSURE:return c&&c.on?15:0;case TARGET:return c&&c.tm>0?c.lvl:0;
+  case OBSERVER:{const f=s&3;return c&&c.pulse>0&&x-D4[f][0]===tx&&z-D4[f][2]===tz?15:0}
+  case REPEATER:{const f=s&3;return(s&16)&&x+D4[f][0]===tx&&z+D4[f][2]===tz?15:0}
+  case COMPARATOR:{const f=s&3;return c&&c.out>0&&x+D4[f][0]===tx&&z+D4[f][2]===tz?c.out:0}}return 0}
+function cpow(x,y,z){let m=EM.get(rk(x,y,z))||0;for(const[dx,,dz]of D4){const l=DL.get(rk(x+dx,y,z+dz));if(l>m)m=l}const u=DL.get(rk(x,y+1,z));return u>m?u:m}
+const standing=(x,y,z)=>{const t=(px,py,pz)=>Math.floor(px)===x&&Math.floor(pz)===z&&py>=y-.1&&py<y+.5;return t(P.x,P.y,P.z)||mobs.some(m=>t(m.x,m.y,m.z))};
+function sideLvl(x,y,z,tx,tz){const bs=getB(x,y,z)&255;return(bs===RED_DUST||bs===REPEATER||bs===COMPARATOR||bs===RBLK)?outAt(x,y,z,tx,tz):0}
+function targetHit(x,y,z,a){const c=RS.get(rk(x,y,z));if(!c)return;const o=[a.x-x-.5,a.y-y-.5,a.z-z-.5].map(Math.abs).sort((p,q)=>q-p);c.lvl=Math.max(1,15-Math.floor(Math.max(o[1],o[2])*2*15));c.tm=10}
+function shootArrow(x,y,z,vx,vy,vz){const g=new THREE.Mesh(AG,AM);scene.add(g);arrows.push({g,x,y,z,vx,vy,vz,life:6,own:true})}
+function fireCont(c){const arr=contAt(c.x,c.y,c.z);if(!arr)return;const f=c.s&3,dr=D4[f],i=arr.findIndex(Boolean);if(i<0)return;const sl=arr[i],id=sl[0],fx=c.x+.5+dr[0]*.6,fz=c.z+.5+dr[2]*.6,fy=c.y+.5;
+ if(c.bs===DROPPER){const tg=contAt(c.x+dr[0],c.y,c.z+dr[2]);if(tg){if(!contInsert(tg,id,1))return}else spawnDrop(id,1,fx,fy,fz,dr[0]*1.5,dr[2]*1.5,1.2)}
+ else{if(id===I.arrow)shootArrow(fx,fy,fz,dr[0]*22,2,dr[2]*22);else spawnDrop(id,1,fx,fy,fz,dr[0]*7,dr[2]*7,2.5)}
+ sl[1]--;if(sl[1]<=0)arr[i]=null}
+function hopperStep(c){const arr=contAt(c.x,c.y,c.z),f=c.s===0?5:c.s-1,dr=f===5?D6[5]:D4[f];if(!arr)return;
+ const tg=contAt(c.x+dr[0],c.y+dr[1],c.z+dr[2]);
+ for(let i=0;i<arr.length;i++){const sl=arr[i];if(sl&&tg&&contInsert(tg,sl[0],1)){sl[1]--;if(sl[1]<=0)arr[i]=null;break}}
+ const up=contAt(c.x,c.y+1,c.z);
+ if(up){for(let i=0;i<up.length;i++){const sl=up[i];if(sl&&contInsert(arr,sl[0],1)){sl[1]--;if(sl[1]<=0)up[i]=null;return}}}
+ else for(let i=droppedItems.length-1;i>=0;i--){const d=droppedItems[i];if(Math.abs(d.x-c.x-.5)<.6&&Math.abs(d.z-c.z-.5)<.6&&d.y>c.y+.5&&d.y<c.y+3.2&&contInsert(arr,d.id,1)){d.n--;if(d.n<=0){scene.remove(d.g);droppedItems.splice(i,1)}return}}}
+// ---- ピストン ----
+const IMM=v=>{const bs=v&255;return bs===10||bs===18||bs===PHEAD||CONTB.has(bs)||((bs===PISTON||bs===STICKY_PISTON)&&((v>>8)&8))};
+const PLG=new THREE.BoxGeometry(1,1,.25),SHG=new THREE.BoxGeometry(.25,.25,1),mOch=new THREE.MeshLambertMaterial({color:0xb8924a}),mGrn=new THREE.MeshLambertMaterial({color:0x7cc46a}),mWd=new THREE.MeshLambertMaterial({color:0x9c7a45});
+function pistonTick(c,want){const s=c.s,f=s&7,ext=!!(s&8);if(c.busy)return;const D=f<4?D4[f]:D6[f];
+ if(want&&!ext){const line=[];let x=c.x+D[0],y=c.y+D[1],z=c.z+D[2];
+  for(let i=0;i<14;i++){const v=getB(x,y,z);if(!v||FL[v&255])break;if(IMM(v)||y<=0||y>=H-1)return;line.push([x,y,z,v]);if(line.length>12)return;x+=D[0];y+=D[1];z+=D[2]}
+  if(y<1||y>=H)return;startAnim(c,'ext',D,line)}
+ else if(!want&&ext)startAnim(c,'ret',D,null)}
+function startAnim(c,type,D,line){c.busy=true;const g=new THREE.Group(),pl=new THREE.Mesh(PLG,(c.bs===STICKY_PISTON)?mGrn:mOch),sh=new THREE.Mesh(SHG,mWd);g.add(pl,sh);g.position.set(c.x+.5,c.y+.5,c.z+.5);g.lookAt(new THREE.Vector3(c.x+.5+D[0],c.y+.5+D[1],c.z+.5+D[2]));scene.add(g);anims.push({c,type,D,line,t:0,g,pl,sh})}
+function pushEnt(cells,D){for(const[cx,cy,cz]of cells){const inC=(x,y,z)=>Math.floor(x)===cx&&Math.floor(z)===cz&&y>cy-1&&y<cy+1;
+  if(inC(P.x,P.y,P.z)){P.x+=D[0];P.y+=D[1];P.z+=D[2]}for(const m of mobs)if(inC(m.x,m.y,m.z)){m.x+=D[0];m.y+=D[1];m.z+=D[2]}}}
+function animTick(dt){for(let i=anims.length-1;i>=0;i--){const a=anims[i];a.t+=dt;const p=Math.min(1,a.t/.1),q=a.type==='ext'?p:1-p;
+  a.pl.position.z=.375+q;a.sh.position.z=.25+q/2;a.sh.scale.z=Math.max(q,.001);
+  if(a.t<.1)continue;const c=a.c,s=c.s,f=s&7,D=a.D,sticky=c.bs===STICKY_PISTON,fin=new Map(),put=(x,y,z,v)=>fin.set(rk(x,y,z),[x,y,z,v]);
+  const fx=c.x+D[0],fy=c.y+D[1],fz=c.z+D[2];
+  if(a.type==='ext'){for(const[x,y,z]of a.line)put(x,y,z,0);for(const[x,y,z,v]of a.line)put(x+D[0],y+D[1],z+D[2],v);
+   put(fx,fy,fz,PHEAD|((f|(sticky?8:0))<<8));put(c.x,c.y,c.z,c.bs|((f|8)<<8));
+   pushEnt([[fx,fy,fz],...a.line.map(([x,y,z])=>[x+D[0],y+D[1],z+D[2]])],D)}
+  else{put(c.x,c.y,c.z,c.bs|((f&7)<<8));put(fx,fy,fz,0);
+   if(sticky){const bx=fx+D[0],by=fy+D[1],bz=fz+D[2],v=getB(bx,by,bz);if(v&&!FL[v&255]&&!IMM(v)){put(bx,by,bz,0);put(fx,fy,fz,v)}}}
+  applyChanges([...fin.values()]);c.busy=false;scene.remove(a.g);anims.splice(i,1)}}
+// ---- TNT ----
+const TNTG=new THREE.BoxGeometry(1,1,1),TBG=new THREE.BoxGeometry(1.01,.3,1.01),tMatR=new THREE.MeshLambertMaterial({color:0xc83020}),tMatW=new THREE.MeshLambertMaterial({color:0xffffff,emissive:0xffffff}),tMatB=new THREE.MeshLambertMaterial({color:0xe8e8e8});
+function spawnPrimed(x,y,z,fuse){const g=new THREE.Group(),m=new THREE.Mesh(TNTG,tMatR),b=new THREE.Mesh(TBG,tMatB);m.position.y=.5;b.position.y=.5;g.add(m,b);g.position.set(x,y,z);scene.add(g);primed.push({g,m,b,x,y,z,t:fuse,vy:3.5})}
+function ignite(x,y,z,fuse){applyChanges([[x,y,z,0]]);spawnPrimed(x+.5,y,z+.5,fuse)}
+const FXG=new THREE.SphereGeometry(1,10,8);
+function blast(cx,cy,cz){const R=4,ch=[],tn=[],bx=Math.floor(cx),by=Math.floor(cy),bz=Math.floor(cz);
+ for(let dx=-R;dx<=R;dx++)for(let dy=-R;dy<=R;dy++)for(let dz=-R;dz<=R;dz++){const d=Math.hypot(dx,dy,dz);if(d>R+.3)continue;const x=bx+dx,y=by+dy,z=bz+dz;if(y<1||y>=H)continue;
+  const v=getB(x,y,z),bs=v&255;if(!v||bs===10||bs===18)continue;if(d>2.6&&hh(x,z,y+7)>.72)continue;
+  if(bs===TNTB){tn.push([x,y,z]);ch.push([x,y,z,0]);continue}
+  if(CONTB.has(bs)){const a=chests[rk(x,y,z)];if(a){for(const sl of a)if(sl)spawnDrop(sl[0],sl[1],x+.5,y+.5,z+.5);delete chests[rk(x,y,z)]}}
+  ch.push([x,y,z,0])}
+ applyChanges(ch);for(const[x,y,z]of tn)spawnPrimed(x+.5,y,z+.5,.4+Math.random()*.6);
+ for(const p of primed)if(Math.hypot(p.x-cx,p.y-cy,p.z-cz)<R+1)p.t=Math.min(p.t,.4+Math.random()*.5);
+ const pd=Math.hypot(P.x-cx,P.y+.9-cy,P.z-cz);if(pd<7)hurt(Math.max(1,Math.round((7-pd)*3)));
+ for(const m of mobs.slice()){const d=Math.hypot(m.x-cx,m.y+.9-cy,m.z-cz);if(d<7){m.hp-=Math.round((7-d)*3);m.kx=(m.x-cx)/(d+.1)*8;m.kz=(m.z-cz)/(d+.1)*8;m.vy=5;if(m.hp<=0)rmMob(m)}}
+ const g=new THREE.Mesh(FXG,new THREE.MeshBasicMaterial({color:0xfff2c0,transparent:true,opacity:.8}));g.position.set(cx,cy,cz);scene.add(g);fxs.push({g,t:0})}
+function primedTick(dt){for(let i=primed.length-1;i>=0;i--){const p=primed[i];p.t-=dt;
+  const fl=Math.floor(p.t*(p.t<1?8:4))%2===0;p.m.material=fl?tMatW:tMatR;p.b.material=fl?tMatW:tMatB;p.g.scale.setScalar(fl?1.06:1);
+  p.vy-=12*dt;const ny=p.y+p.vy*dt;if(p.vy<0&&solid(getB(Math.floor(p.x),Math.floor(ny),Math.floor(p.z)))){p.y=Math.floor(ny)+1;p.vy=0}else p.y=ny;
+  p.g.position.set(p.x,p.y,p.z);if(p.t<=0){scene.remove(p.g);primed.splice(i,1);blast(p.x,p.y+.5,p.z)}}
+ for(let i=fxs.length-1;i>=0;i--){const f=fxs[i];f.t+=dt;f.g.scale.setScalar(.5+f.t*12);f.g.material.opacity=Math.max(0,.8-f.t*2.4);if(f.t>.35){scene.remove(f.g);fxs.splice(i,1)}}}
+// ---- メインtick ----
+function rsTick(){const list=[];
+ RS.forEach((c,k)=>{if(Math.abs(c.x-P.x)>56||Math.abs(c.z-P.z)>56)return;const v=getB(c.x,c.y,c.z);if(!RSB.has(v&255)){RS.delete(k);return}c.v=v;c.bs=v&255;c.s=v>>8;list.push(c)});
+ EM=new Map();const E=(x,y,z,l)=>{const k=rk(x,y,z);if((EM.get(k)||0)<l)EM.set(k,l)},adj=(c,l)=>{for(const[dx,dy,dz]of D6)E(c.x+dx,c.y+dy,c.z+dz,l)};
+ for(const c of list){const bs=c.bs,s=c.s;
+  if((bs===STONE_BUTTON||bs===TARGET)&&c.tm>0)c.tm--;if(bs===OBSERVER&&c.pulse>0)c.pulse--;if(bs===PRESSURE)c.on=standing(c.x,c.y,c.z);
+  switch(bs){case RBLK:case RED_TORCH:adj(c,15);break;case LEVER:if(s&1)adj(c,15);break;case STONE_BUTTON:if(c.tm>0)adj(c,15);break;case PRESSURE:if(c.on)adj(c,15);break;case TARGET:if(c.tm>0)adj(c,c.lvl);break;
+   case OBSERVER:if(c.pulse>0){const f=s&3;E(c.x-D4[f][0],c.y,c.z-D4[f][2],15)}break;
+   case REPEATER:if(s&16){const f=s&3;E(c.x+D4[f][0],c.y,c.z+D4[f][2],15)}break;
+   case COMPARATOR:if(c.out>0){const f=s&3;E(c.x+D4[f][0],c.y,c.z+D4[f][2],c.out)}break}}
+ const dust=list.filter(c=>c.bs===RED_DUST),nd=new Map();for(const c of dust)nd.set(rk(c.x,c.y,c.z),EM.get(rk(c.x,c.y,c.z))||0);
+ for(let it=0;it<16;it++){let chg=false;for(const c of dust){const l=nd.get(rk(c.x,c.y,c.z));if(l<=1)continue;for(const[dx,,dz]of D4){const kk=rk(c.x+dx,c.y,c.z+dz);if(nd.has(kk)&&nd.get(kk)<l-1){nd.set(kk,l-1);chg=true}}}if(!chg)break}
+ DL=nd;const ch=[];
+ for(const c of dust){const l=nd.get(rk(c.x,c.y,c.z));if(l!==c.s)ch.push([c.x,c.y,c.z,RED_DUST|(l<<8)])}
+ for(const c of list){const x=c.x,y=c.y,z=c.z,s=c.s;
+  switch(c.bs){
+   case RED_LAMP:{const on=cpow(x,y,z)>0;if(on!==!!(s&1))ch.push([x,y,z,on?RED_LAMP|256:RED_LAMP])}break;
+   case TNTB:if(cpow(x,y,z)>0)ignite(x,y,z,4);break;
+   case REPEATER:{const f=s&3,d=((s>>2)&3)+1,want=outAt(x-D4[f][0],y,z-D4[f][2],x,z)>0;if(c.on===undefined)c.on=!!(s&16);
+    if(want!==c.on){if(c.pv===want){if(--c.tm<=0){c.on=want;c.pv=undefined;ch.push([x,y,z,REPEATER|(((s&~16)|(want?16:0))<<8)])}}else{c.pv=want;c.tm=d}}else c.pv=undefined;break}
+   case COMPARATOR:{const f=s&3,bx=x-D4[f][0],bz=z-D4[f][2];let B=contLevel(bx,y,bz);if(B<0)B=outAt(bx,y,bz,x,z);
+    const A=Math.max(sideLvl(x+D4[(f+1)&3][0],y,z+D4[(f+1)&3][2],x,z),sideLvl(x+D4[(f+3)&3][0],y,z+D4[(f+3)&3][2],x,z));
+    c.out=(s&4)?Math.max(B-A,0):(A>B?0:B);break}
+   case OBSERVER:{const f=s&3,cur=getB(x+D4[f][0],y,z+D4[f][2]);if(c.last===undefined)c.last=cur;else if(cur!==c.last){c.last=cur;c.pulse=2}break}
+   case PISTON:case STICKY_PISTON:pistonTick(c,cpow(x,y,z)>0);break;
+   case DISPENSER:case DROPPER:{const p=cpow(x,y,z)>0;if(p&&!c.pw)fireCont(c);c.pw=p;break}
+   case HOPPER:c.ht=(c.ht||0)+1;if(c.ht>=4){c.ht=0;hopperStep(c)}break}}
+ if(ch.length)applyChanges(ch);circuitOn=EM.size>0}
+function circuitTick(dt){fluidTick(dt);rsAcc+=dt;let n=0;while(rsAcc>=.1&&n<3){rsAcc-=.1;n++;rsTick()}if(rsAcc>.3)rsAcc=0;primedTick(dt);animTick(dt)}
+function breakRS(x,y,z,v){const bs=v&255;
+ if(CONTB.has(bs)){const k=rk(x,y,z),a=chests[k];if(a)for(const sl of a)if(sl)spawnDrop(sl[0],sl[1],x+.5,y+.7,z+.5);delete chests[k];give(bs,1)}
+ else if(bs===RED_DUST)give(I.redstone,1);
+ else if(bs===PHEAD){const f=(v>>8)&7,D=f<4?D4[f]:D6[f],bx=x-D[0],by=y-D[1],bz=z-D[2],bv=getB(bx,by,bz);if(((bv&255)===PISTON||(bv&255)===STICKY_PISTON)&&((bv>>8)&8))applyChanges([[bx,by,bz,(bv&255)|(((bv>>8)&7)<<8)]])}
+ else give(bs,1)}
+function rsPlace(base,pf,a,b,c,x,y,z){
+ if(base===REPEATER||base===COMPARATOR)return base|(pf<<8);
+ if(base===OBSERVER||base===DISPENSER||base===DROPPER)return base|(((pf+2)&3)<<8);
+ if(base===PISTON||base===STICKY_PISTON){const pt=P.pitch;return base|((pt<-.9?4:pt>.9?5:((pf+2)&3))<<8)}
+ if(base===HOPPER){if(b!==y)return base;const dx=x-a,dz=z-c;return base|((1+(dz<0?0:dx>0?1:dz>0?2:3))<<8)}
+ return base}
+function rsUse(tv,x,y,z){const bs=tv&255,s=tv>>8;
+ if(bs===REPEATER){const d=(((s>>2)&3)+1)&3;setB(x,y,z,REPEATER|(((s&~12)|(d<<2))<<8));toast('リピーターの遅延 '+((d+1)/10).toFixed(1)+'秒');return true}
+ if(bs===COMPARATOR){const m=(s&4)?0:1;setB(x,y,z,COMPARATOR|(((s&~4)|(m?4:0))<<8));toast(m?'コンパレーター：減算モード':'コンパレーター：比較モード');return true}
+ if(bs===STONE_BUTTON){const c=RS.get(rk(x,y,z));if(c)c.tm=10;toast('ボタンを押した（1秒間 信号ON）');return true}
+ return false}
+// ================= 流体（水・マグマ）：流れ・バケツ・反応・スポンジ =================
+const FQ=[new Map(),new Map()],FIV=[.25,.5],FAC=[0,0],SPW=(k)=>k===0?WA:LA,FLW=(k)=>k===0?WF:LF;
+function fluidDirty(x,y,z,old,nw){const near=FL[(old||0)&255]||FL[(nw||0)&255]||D6.some(([dx,dy,dz])=>FL[getB(x+dx,y+dy,z+dz)&255]);if(!near)return;
+ for(const[dx,dy,dz]of[[0,0,0],...D6]){const p=[x+dx,y+dy,z+dz],k=rk(p[0],p[1],p[2]);FQ[0].set(k,p);FQ[1].set(k,p)}}
+function fblocked(k,nv,nx,y,nz){const bv=getB(nx,y-1,nz);if(solid(bv))return true;return (nv&255)===SPW(k)&&FL[bv&255]===k+1}
+function fdesired(k,x,y,z){
+ // 水平流だけを計算する。落下判定はfluidCell側で行う。
+ let best=0;
+ for(let f=0;f<4;f++){
+  const nx=x+D4[f][0],nz=z+D4[f][2],nv=getB(nx,y,nz),nb=nv&255;
+  if(FL[nb]!==k+1||!fblocked(k,nv,nx,y,nz))continue;
+  const s=nv>>8;
+  const sup=(nb===SPW(k))?1:s+1;
+  // 8/8の落下流は水平流の起点にしない。
+  if(sup<=7&&(best===0||sup<best))best=sup;
+ }
+ return best;
+}
+function spongeAbsorb(x,y,z){const ch=[];for(let dx=-3;dx<=3;dx++)for(let dy=-3;dy<=3;dy++)for(let dz=-3;dz<=3;dz++){if(dx*dx+dy*dy+dz*dz>10)continue;if(FL[getB(x+dx,y+dy,z+dz)&255]===1)ch.push([x+dx,y+dy,z+dz,0])}
+ if(!ch.length)return false;ch.push([x,y,z,WSPG]);applyChanges(ch);return true}
+function lavaReact(x,y,z,v,ch){const src=(v&255)===LA;
+ if(FL[getB(x,y-1,z)&255]===1){ch.push([x,y-1,z,3]);return true}                      // 真上から溶岩が水に触れる → 水が石に
+ if(D4.some(([dx,,dz])=>FL[getB(x+dx,y,z+dz)&255]===1)||FL[getB(x,y+1,z)&255]===1){ch.push([x,y,z,src?18:8]);return true}   // 溶岩源→黒曜石 / 溶岩流→丸石
+ return false}
+function fluidCell(k,x,y,z,ch){
+ const v=getB(x,y,z),bs=v&255,fk=FL[bs];
+ if(fk&&fk!==k+1)return;
+ if(fk===k+1){
+  if(k===0)for(const[dx,dy,dz]of D6)if((getB(x+dx,y+dy,z+dz)&255)===SPG){spongeAbsorb(x+dx,y+dy,z+dz);return}
+  if(k===1&&lavaReact(x,y,z,v,ch))return;
+  // 水源・マグマ源は落下口にあっても消したり流れブロックへ変換しない。
+  // まず1マス下へ「落下流」を作り、元の源はそのまま維持する。
+  if(bs===SPW(k)){
+   const below=getB(x,y-1,z);
+   if((below&255)===0)ch.push([x,y-1,z,FLW(k)|(8<<8)]);
+   return;
+  }
+  // すでに落下流になっている液体も、真下が空気ならそのまま保持して下へ進ませる。
+  const below=getB(x,y-1,z);
+  if((below&255)===0){
+   if((v>>8)!==8)ch.push([x,y,z,FLW(k)|(8<<8)]);
+   ch.push([x,y-1,z,FLW(k)|(8<<8)]);
+   return;
+  }
+  const d=fdesired(k,x,y,z);
+  if(d===0)ch.push([x,y,z,0]);
+  else if(d!==(v>>8))ch.push([x,y,z,FLW(k)|(d<<8)]);
+ }else if(v===0){
+  // 空セルは真上の同じ液体からだけ落下流を生成する。
+  // 1マス落下の境目で横流れと競合しないよう、落下を最優先する。
+  const above=getB(x,y+1,z),ab=above&255;
+  if(FL[ab]===k+1){
+   ch.push([x,y,z,FLW(k)|(8<<8)]);
+   return;
+  }
+  const d=fdesired(k,x,y,z);
+  if(d>0)ch.push([x,y,z,FLW(k)|(d<<8)]);
+ }}
+function fluidTick(dt){for(let k=0;k<2;k++){FAC[k]+=dt;if(FAC[k]<FIV[k])continue;FAC[k]=FAC[k]>FIV[k]*2?0:FAC[k]-FIV[k];
+  const cells=[...FQ[k].values()];FQ[k].clear();if(!cells.length)continue;
+  const run=cells.slice(0,1800);for(const p of cells.slice(1800))FQ[k].set(rk(p[0],p[1],p[2]),p);
+  const ch=[];for(const[x,y,z]of run)fluidCell(k,x,y,z,ch);if(ch.length)applyChanges(ch)}}
+// ---- バケツ ----
+function rayFluid(){const dir=rdir.set(0,0,-1).applyEuler(cam.rotation),o=cam.position;let prev=null;
+ for(let t=0;t<5;t+=.04){const x=Math.floor(o.x+dir.x*t),y=Math.floor(o.y+dir.y*t),z=Math.floor(o.z+dir.z*t),v=getB(x,y,z);
+  if(solid(v)||FL[v&255])return{x,y,z,v,prev};if(!prev||prev[0]!=x||prev[1]!=y||prev[2]!=z)prev=[x,y,z]}return null}
+function rayPlaceBlock(){
+ const dir=rdir.set(0,0,-1).applyEuler(cam.rotation),o=cam.position;
+ let prev=null;
+ for(let t=0;t<6;t+=.04){
+  const x=Math.floor(o.x+dir.x*t),y=Math.floor(o.y+dir.y*t),z=Math.floor(o.z+dir.z*t),v=getB(x,y,z);
+  if(solid(v))return{x,y,z,v,prev};
+  if(!prev||prev[0]!==x||prev[1]!==y||prev[2]!==z)prev=[x,y,z];
+ }
+ return null;
+}
+function bucketUse(id){
+ // ホットバーで選択中のバケツを「持っている」ものとして扱う。
+ // 旧セーブやインベントリ表示とのIDずれで所持数だけ0になる場合でも、
+ // バケツの操作自体が止まらないようにする。使用後は通常どおり所持数を更新する。
+ if(!(invCount[id]>0)){
+   if(hot[sel]===id){invCount[id]=1;draw();if(typeof refreshSaveInfo==='function')refreshSaveInfo();}
+   else return;
+ }
+ // 空バケツは、視線の先の水源・マグマ源を直接すくう。
+ if(id===I.bucket){
+  const r=rayFluid();if(!r)return;
+  const fk=FL[r.v&255];if(!fk)return;
+  if((r.v&255)===WA||(r.v&255)===LA){
+   setB(r.x,r.y,r.z,0);take(I.bucket,1);give(fk===1?I.waterBucket:I.lavaBucket,1);
+   toast(fk===1?'水を汲んだ':'マグマを汲んだ');
+  }else toast('流れている'+(fk===1?'水':'マグマ')+'は汲めません（水源・溶岩源のみ）');
+  return;
+ }
+ // 水入り/マグマ入りバケツは、視線の先の「固体ブロック」に当たった面の1マス先へ源を設置する。
+ const r=rayPlaceBlock();if(!r||!r.prev)return;
+ const [px,py,pz]=r.prev;
+ if(py<0||py>=H)return;
+ const cv=getB(px,py,pz);
+ // 空気または同じ液体以外の流体でない場所だけに設置。
+ if(cv!==0 && !FL[cv&255]){toast('そこには置けません');return}
+ const src=id===I.waterBucket?WA:LA;
+ if((cv&255)===src){toast('そこはすでに液体の源です');return}
+ // 別の流体がある場所への直接上書きは防ぐ。
+ if(FL[cv&255] && (cv&255)!==src){toast('そこには置けません');return}
+ setB(px,py,pz,src);
+ take(id,1);give(I.bucket,1);
+ toast(id===I.waterBucket?'水を置いた':'マグマを置いた');
+}
+function bucketImg(liq){const cv=document.createElement('canvas');cv.width=cv.height=16;const c=cv.getContext('2d'),im=c.createImageData(16,16),px=(x,y,col)=>{const i=(y*16+x)*4;im.data[i]=col[0];im.data[i+1]=col[1];im.data[i+2]=col[2];im.data[i+3]=255};
+ const O=[70,70,76],M=[168,168,176],Lt=[205,205,212],Dk=[118,118,126];
+ [[4,3],[4,2],[5,1],[6,1],[7,1],[8,1],[9,1],[10,1],[11,2],[11,3]].forEach(([x,y])=>px(x,y,Dk));
+ for(let y=4;y<=14;y++){const l=3+Math.floor((y-4)/4),r=12-Math.floor((y-4)/4);for(let x=l;x<=r;x++)px(x,y,(x===l||x===r||y===14)?O:y===4?Lt:x<l+2?Lt:x>r-2?Dk:M)}
+ if(liq){const lc=liq==='w'?[[64,120,230],[120,170,255],[40,85,190]]:[[240,120,20],[255,210,70],[200,70,10]];
+  for(let y=5;y<=7;y++){const l=4+Math.floor((y-4)/4),r=11-Math.floor((y-4)/4);for(let x=l;x<=r;x++)px(x,y,y===5?lc[1]:y===7?lc[2]:lc[0])}}
+ c.putImageData(im,0,0);return cv.toDataURL()}
+ITEMS[I.bucket].img=bucketImg(null);ITEMS[I.waterBucket].img=bucketImg('w');ITEMS[I.lavaBucket].img=bucketImg('l');
+// ---- 流体メッシュ（水位に応じた高さ） ----
+// ---- 流体メッシュ：1マス流れるごとに上面が1/8ブロックずつ下がる「斜面」（段差なし） ----
+function fHt(v){const s=v>>8;return s>=8?1:s<=0?1:(8-s)/8}
+function fCorner(g,k,x,y,z,i,j){let sum=0,n=0;for(let dx=i-1;dx<=i;dx++)for(let dz=j-1;dz<=j;dz++){const v=g(x+dx,y,z+dz);if(FL[v&255]!==k)continue;if(FL[g(x+dx,y+1,z+dz)&255]===k)return 1;sum+=fHt(v);n++}return n?sum/n:1}
+function fluidFaces(S,g,x,y,z,b,bt){const k=FL[b&255],t0=bt[0],hc=[[fCorner(g,k,x,y,z,0,0),fCorner(g,k,x,y,z,0,1)],[fCorner(g,k,x,y,z,1,0),fCorner(g,k,x,y,z,1,1)]];
+ for(const[d,cq,sh]of F){const nb=g(x+d[0],y+d[1],z+d[2]);
+  if(d[1]>0){if(FL[nb&255]===k)continue}else if(d[1]<0){if(nb)continue}else if(FL[nb&255]===k||occl(nb))continue;
+  const kk=k===2?1:sh;
+  for(const q of cq){const py=q[1]?hc[q[0]][q[2]]:0;S.p.push(x+q[0],y+py,z+q[2]);S.c.push(kk,kk,kk);
+   const[u,v]=uvOf(d,q[0],py,q[2]);S.u.push(((t0%CO)+(u?.99:.01))/CO,(RW-1-Math.floor(t0/CO)+(v?.99:.01))/RW)}
+  S.i.push(S.n,S.n+1,S.n+2,S.n,S.n+2,S.n+3);S.n+=4}}
+// ---- 流れ：上面が低くなる方向へ毎秒1ブロック。流れの端(これ以上低い液体がない所)で止まる ----
+function flowVec(x,y,z){const v=getB(x,y,z),k=FL[v&255];if(!k)return null;
+ if((v>>8)>=8&&!solid(getB(x,y-1,z)))return null;
+ const h=fHt(v);let fx=0,fz=0;
+ for(let f=0;f<4;f++){const nx=x+D4[f][0],nz=z+D4[f][2],nv=getB(nx,y,nz);let dh=0;
+  if(FL[nv&255]===k){dh=FL[getB(nx,y+1,nz)&255]===k?0:h-fHt(nv)}
+  else if(!solid(nv)&&FL[nv&255]===0){if(!solid(getB(nx,y-1,nz)))dh=h}
+  if(dh>0){fx+=D4[f][0]*dh;fz+=D4[f][2]*dh}}   // 低い隣・段差の縁へだけ流す（行き止まりのマスは0＝端で止まる）
+ const m=Math.hypot(fx,fz);return m>1e-6?[fx/m,fz/m]:[0,0]}
+function updFlow(e,x,ys,z,dt){let t=null;for(const o of ys){const fv=flowVec(x,Math.floor(o),z);if(fv){t=fv;break}}
+ const tx=t?t[0]:0,tz=t?t[1]:0,r=Math.min(1,6*dt);e.fx=(e.fx||0)+(tx-(e.fx||0))*r;e.fz=(e.fz||0)+(tz-(e.fz||0))*r}
+// ---- loop ----
+let last=performance.now(),fr=0,fps=60,uw=false;const hud=document.getElementById('hud'),uwOverlay=document.getElementById('uwOverlay'),UWC=new THREE.Color(0x1d4a8c),uwTmp=new THREE.Color();
+let circuitOn=false,circuitT=0;
+function crouchHasSupport(x,y,z){const yy=Math.floor(y-.08),r=.27;return [[x-r,z-r],[x+r,z-r],[x-r,z+r],[x+r,z+r],[x,z]].some(([px,pz])=>solid(getB(Math.floor(px),yy,Math.floor(pz))));}
+
+for(const[dx,dz]of[[0,0],[1,0],[-1,0],[0,1],[0,-1]]){const c=getC((Math.floor(P.x)>>4)+dx,(Math.floor(P.z)>>4)+dz);if(c&&!c.v)mesh(c)}
+function loop(now){
+ const dt=Math.min(.05,(now-last)/1000);last=now;fps+=(1/Math.max(dt,.001)-fps)*.05;
+ const f=inv?0:(keys.KeyW?1:0)-(keys.KeyS?1:0),s=inv?0:(keys.KeyD?1:0)-(keys.KeyA?1:0);
+ const sn=Math.sin(P.yaw),cs=Math.cos(P.yaw),ix=Math.floor(P.x),iz=Math.floor(P.z);
+ const mid=getB(ix,Math.floor(P.y+.4),iz);
+ if(isL(mid)||isL(getB(ix,Math.floor(P.y+1.4),iz))||isL(getB(ix,Math.floor(P.y+.05),iz))){toast('溶岩で死んだ！ リスポーンします');respawn()}
+ const crouching=!flying&&!inv&&(keys.ShiftLeft||keys.ShiftRight);
+ const dashing=!flying&&!inv&&keys.KeyW&&keys.KeyR;sprintAmt+=((dashing?1:0)-sprintAmt)*Math.min(1,8*dt);
+ const inWater=isW(mid)||[-.35,.05,.45,1.2].some(o=>isW(getB(ix,Math.floor(P.y+o),iz)));
+ const onHoney=!flying&&honeyContact(P.x,P.y,P.z);
+ const iw=inWater&&!flying,swimDash=iw&&dashing,sp=flying?12:(dashing?9:(crouching?2.2:4.5))*(iw?.55:1)*(onHoney?.4:1);
+ const bodyHit=swimDash?hitSwim:hit;
+ if(swimDash){const cp=Math.cos(P.pitch),dx=-Math.sin(P.yaw)*cp,dy=-Math.sin(P.pitch),dz=-Math.cos(P.yaw)*cp;P.vx=dx*9;P.vy=dy*9;P.vz=dz*9}else{P.vx=(-sn*f+cs*s)*sp;P.vz=(-cs*f-sn*s)*sp;
+ if(!flying){updFlow(P,Math.floor(P.x),[P.y+.4,P.y+.05,P.y+1.0],Math.floor(P.z),dt);P.vx+=P.fx;P.vz+=P.fz}else{P.fx=P.fz=0}}
+ if(flying)P.vy=((keys.Space&&!inv?1:0)-((keys.ShiftLeft||keys.ShiftRight)&&!inv?1:0))*9;else if(swimDash){}else{P.vy-=(iw?9:26)*dt;
+ if(iw){P.vy*=1-2.5*dt;if(keys.Space&&!inv)P.vy=Math.min(P.vy+25*dt,3.5)}else if(keys.Space&&P.ground&&!inv){const under=getB(Math.floor(P.x),Math.floor(P.y-.08),Math.floor(P.z))&255;P.vy=under===HONEY?Math.sqrt(2*26*.3):8.5}}
+ if(P.vy<-40)P.vy=-40;const gnd=P.ground;P.ground=false;
+ let bl=false;const nx=P.x+P.vx*dt;if(!bodyHit(nx,P.y,P.z) && !(crouching&&gnd&&!crouchHasSupport(nx,P.y,P.z)))P.x=nx;else{bl=true;if(gnd&&!crouching&&!bodyHit(nx,P.y+.6,P.z)){P.x=nx;P.y+=.6}}
+ const nz=P.z+P.vz*dt;if(!bodyHit(P.x,P.y,nz) && !(crouching&&gnd&&!crouchHasSupport(P.x,P.y,nz)))P.z=nz;else{bl=true;if(gnd&&!crouching&&!bodyHit(P.x,P.y+.6,nz)){P.z=nz;P.y+=.6}}
+ if(bl&&iw&&!swimDash&&(f||s)&&!hit(P.x+Math.sign(P.vx)*.4,P.y+1.1,P.z+Math.sign(P.vz)*.4))P.vy=Math.max(P.vy,7);
+ const ny=P.y+P.vy*dt;if(!bodyHit(P.x,ny,P.z))P.y=ny;else{if(P.vy<0){const impact=-P.vy;P.ground=true;if(!flying&&slimeUnder(P.x,P.y,P.z,R))P.vy=impact*Math.SQRT1_2;else P.vy=0;if(flying){flying=false;toast('飛行モード OFF')}}else P.vy=0}
+ cam.position.set(P.x,P.y+1.6,P.z);{const tf=cfg.fov+(cfg.sprintFov?12*sprintAmt:0);if(Math.abs(cam.fov-tf)>.01){cam.fov=tf;cam.updateProjectionMatrix()}}cam.rotation.set(P.pitch,P.yaw,0);
+ const nu=isW(getB(Math.floor(P.x),Math.floor(P.y+1.6),Math.floor(P.z)));
+ if(nu!=uw){uw=nu;uwOverlay.style.opacity=uw?1:0;if(CLD.m)CLD.m.visible=!uw;const c=uw?0x1d4a8c:0x87ceeb;scene.fog.color.set(c);scene.background.set(c);scene.fog.near=uw?.1:35;scene.fog.far=uw?24:RD*16-10}
+ target=ray();if(target){hl.visible=true;hl.position.set(target.x+.5,target.y+.5,target.z+.5)}else hl.visible=false;
+ updateDayNight(dt); updateBlockGlows(dt); circuitTick(dt);mobTick(dt);arrowTick(dt);cloudTick(dt);dropTick(dt);stream();
+ if(++fr%15==0)hud.textContent=(flying?'✈飛行中  ':swimDash?'泳ぎ中  ':crouching?'しゃがみ中  ':dashing?'ダッシュ  ':'')+`X:${ix} Y:${Math.floor(P.y)} Z:${iz}  FPS:${fps|0}  チャンク:${C.size}  装備:${equipped.weapon?ITEMS[equipped.weapon].name:'素手'}  回路:${circuitOn?'ON':'OFF'}`;
+ ren.render(scene,cam);requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+
+
+// ---- 改良版インベントリUI ----
+const invBody=document.getElementById('invBody'), invTabs=document.getElementById('invTabs');
+let invPage='all', craftSlots=[null,null,null,null];
+const INV_CATS=[['all','すべて'],['building','建材系'],['circuit','回路系'],['func','機能系'],['food','食料系'],['transport','輸送系'],['combat','戦闘・防御系'],['other','その他'],['inventory','インベントリ'],['world','ワールド']];
+const CIRCUIT=new Set([RED_DUST,RED_TORCH,REPEATER,LEVER,STONE_BUTTON,PRESSURE,PISTON,STICKY_PISTON,OBSERVER,DISPENSER,COMPARATOR,DROPPER,HOPPER,RED_LAMP,TARGET,nmid('レッドストーンブロック'),nmid('TNT'),I.redstone]),FUNC=new Set([CHEST,nmid('作業台'),nmid('かまど'),nmid('本棚'),I.bucket,I.waterBucket,I.lavaBucket,nmid('スポンジ')]);
+function itemCategory(id){
+  if(new Set([RAIL,POWERED_RAIL,DETECTOR_RAIL,ACTIVATOR_RAIL,I.rail,I.poweredRail,I.detectorRail,I.activatorRail,I.minecart]).has(id))return 'transport';
+  if(CIRCUIT.has(id))return 'circuit';
+  const q=ITEMS[id];
+  if(FUNC.has(id))return 'func';if(!q)return 'building';
+  if(q.type==='food')return 'food';
+  if(q.type==='weapon'||q.type==='armor')return 'combat';
+  if(q.type==='transport')return 'transport';
+  if(q.type==='block')return 'building';
+  return 'other';
+}
+const RAIL_ITEM_IDS=new Set([I.rail,I.poweredRail,I.detectorRail,I.activatorRail]);
+function allAvailableIds(){return [...new Set([...PL,...Object.keys(ITEMS).map(Number)])].filter(id=>id!=null&&!RAIL_ITEM_IDS.has(id))}
+function invIcon(id){return isItem(id)?itemIcon(id):icon(id)}
+function selectInvItem(id){
+  if(isItem(id)){equip(id)}else{hot[sel]=id;draw();toast((NM[id]||'不明なアイテム')+'をホットバーに追加')}
+  if(invPage!=='inventory')renderInventory();
+}
+function renderTabs(){invTabs.innerHTML='';INV_CATS.forEach(([id,n])=>{const b=document.createElement('button');b.textContent=n;b.className=invPage===id?'on':'';b.onclick=()=>{invPage=id;renderInventory()};invTabs.appendChild(b)})}
+function makeItemGrid(ids){const g=document.createElement('div');g.className='catGrid';ids.forEach(id=>{const e=document.createElement('div');e.className='it';e.title=isItem(id)?ITEMS[id].name:(NM[id]||'不明なアイテム');e.innerHTML=invIcon(id)+(isItem(id)?'':`<u>${invCount[id]||0}</u>`);e.onclick=()=>selectInvItem(id);g.appendChild(e)});return g}
+function renderInventory(){
+ renderTabs();invBody.innerHTML='';
+ if(invPage==='world'){renderWorldInfo();return}
+ if(invPage==='inventory'){renderPlayerInventory();return}
+ let ids=allAvailableIds().filter(id=>invPage==='all'||itemCategory(id)===invPage);
+ invBody.appendChild(makeItemGrid(ids));
+}
+function renderWorldInfo(){
+ const d=document.createElement('div');d.className='equipPanel';
+ const editsCount=[...edits.values()].reduce((n,m)=>n+m.size,0), chestCount=Object.keys(chests).length;
+ d.innerHTML=`<div class="invTitle">ワールド情報</div><div>座標：X ${P.x.toFixed(1)} / Y ${P.y.toFixed(1)} / Z ${P.z.toFixed(1)}</div><div>ワールド変更ブロック：${editsCount.toLocaleString()}個</div><div>チェスト：${chestCount}個</div><div>セーブキー：${SK}</div>`;
+ invBody.appendChild(d);
+ const title=document.createElement('div');title.className='invTitle';title.textContent='インベントリ内容';invBody.appendChild(title);
+ const rows=document.createElement('div');rows.className='catGrid';
+ const ids=Object.keys(invCount).map(Number).filter(id=>invCount[id]>0).sort((a,b)=>a-b);
+ if(!ids.length){rows.textContent='インベントリは空です';invBody.appendChild(rows);return}
+ rows.style.gridTemplateColumns='repeat(auto-fill,minmax(120px,1fr))';
+ ids.forEach(id=>{const e=document.createElement('div');e.className='it';e.style.aspectRatio='auto';e.style.minHeight='58px';e.innerHTML=invIcon(id)+`<span style="position:absolute;left:4px;right:4px;bottom:3px;font-size:10px;color:#fff;text-shadow:1px 1px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ITEMS[id]?.name||NM[id]||'アイテム'} × ${invCount[id]}</span>`;e.onclick=()=>selectInvItem(id);rows.appendChild(e)});
+ invBody.appendChild(rows);
+}
+function renderPlayerInventory(){
+  const ep=document.createElement('div');ep.className='equipPanel';ep.innerHTML='<div class="invTitle">装備</div>';
+  const names=[['weapon','武器'],['helmet','ヘルメット'],['chest','チェストプレート'],['legs','レギンス'],['boots','ブーツ']];
+  names.forEach(([k,n])=>{const id=equipped[k];const d=document.createElement('div');d.textContent=n+'：'+(id?ITEMS[id].name:'なし');ep.appendChild(d)});invBody.appendChild(ep);
+
+  const title=document.createElement('div');title.className='invTitle';title.textContent='インベントリ（3×9・27スロット）';invBody.appendChild(title);
+  const pg=document.createElement('div');pg.className='playerInvGrid';
+  const owned=Object.keys(invCount).map(Number).filter(id=>invCount[id]>0);
+  for(let i=0;i<27;i++){
+    const id=owned[i]||null;const d=document.createElement('div');d.className='slot';d.title=id?(ITEMS[id]?.name||NM[id]||'アイテム'):'空きスロット';
+    if(id)d.innerHTML=invIcon(id);
+    d.onclick=()=>{if(id)selectInvItem(id)};
+    pg.appendChild(d);
+  }
+  invBody.appendChild(pg);
+
+  const hbTitle=document.createElement('div');hbTitle.className='invTitle';hbTitle.textContent='ホットバー（プレイ中も使用）';invBody.appendChild(hbTitle);
+  const hb=document.createElement('div');hb.className='inventoryHotbar';
+  for(let i=0;i<9;i++){
+    const id=hot[i];const d=document.createElement('div');d.className='slot hotSlot'+(i===sel?' selected':'');d.innerHTML=`<b>${i+1}</b>`+(id!=null?(isItem(id)?itemIcon(id):icon(id)):'');d.onclick=()=>{setSel(i);renderInventory()};hb.appendChild(d);
+  }
+  invBody.appendChild(hb);
+
+  const ct=document.createElement('div');ct.className='invTitle';ct.textContent='2×2 クラフト';invBody.appendChild(ct);
+  const cg=document.createElement('div');cg.className='craft2';craftSlots.forEach((id,i)=>{const d=document.createElement('div');d.className='slot';d.innerHTML=id?invIcon(id):'';d.title=id?'クリックで取り出す':'空き';d.onclick=()=>{if(id){give(id,1);craftSlots[i]=null;renderInventory()}};cg.appendChild(d)});invBody.appendChild(cg);
+  const out=document.createElement('div');out.className='craftOut';const result=document.createElement('div');result.className='slot';const r=find2x2Recipe();if(r)result.innerHTML=invIcon(r[0]);result.onclick=()=>{if(r){consumeCraftSlots(r[1]);give(r[0]);craftSlots=[null,null,null,null];toast(ITEMS[r[0]]?.name||NM[r[0]]+'を作成しました');renderInventory()}};out.appendChild(result);const tx=document.createElement('span');tx.textContent=r?'→ '+(ITEMS[r[0]]?.name||NM[r[0]]):'→ レシピなし';out.appendChild(tx);invBody.appendChild(out);
+  // クラフト欄の下にはレシピ一覧を表示しない。材料を2×2に入れて完成品だけを作れる仕様。
+
+}
+function consumeCraftSlots(need){for(const [id,n] of need){let left=n;for(let i=0;i<4&&left;i++)if(craftSlots[i]===id){craftSlots[i]=null;left--}}}
+function find2x2Recipe(){
+  const a=craftSlots.filter(Boolean); if(!a.length)return null;
+  for(const r of recipes){const req=[];for(let i=0;i<r[2].length;i+=2)req.push([r[2][i],r[2][i+1]]);const total=req.reduce((s,x)=>s+x[1],0);if(total!==a.length)continue;const aa={};a.forEach(x=>aa[x]=(aa[x]||0)+1);if(req.every(x=>(aa[x[0]]||0)===x[1]))return [r[0],req]}
+  return null;
+}
+// 2x2クラフトへアイテムを投入する補助：インベントリ内アイテムをShiftクリック相当で追加
+function putInCraft(id){const q=ITEMS[id];if(!q||!(invCount[id]>0))return;const i=craftSlots.findIndex(x=>x===null);if(i<0)return toast('クラフト欄がいっぱいです');take(id,1);craftSlots[i]=id;renderInventory()}
+// インベントリのアイテムクリックは装備/使用を優先。空き2x2へ入れたい場合は右クリック。
+function renderPlayerInventoryOld(){return}
+const _equip=equip;equip=function(id){if(invPage==='inventory'&&ITEMS[id]&&ITEMS[id].type!=='food'&&ITEMS[id].type!=='weapon'&&ITEMS[id].type!=='armor'&&craftSlots.length){putInCraft(id);return}return _equip(id)};
+const _toggleInv=toggleInv;toggleInv=function(){if(chestKey){closeChest();return}inv=!inv;invEl.style.display=inv?'flex':'none';if(inv){if(document.pointerLockElement)document.exitPointerLock();requestAnimationFrame(()=>{if(inv)renderInventory()})}else{try{cv.requestPointerLock()}catch(e){}}};
+// Eで開閉。死亡時は必ず閉じる。
+const _respawn=respawn;respawn=function(){inv=false;invEl.style.display='none';chestKey=null;chestUI.style.display='none';_respawn()};
+
+window.addEventListener('error',function(e){
+ const m=document.getElementById('msg');
+ const b=document.getElementById('startBtn');
+ if(m&&b&&!gameStarted){m.style.display='flex';b.disabled=false;b.textContent='ゲームスタート';}
+});
+// ---- テクスチャパック読み込み（Java版リソースパック .zip / ブロックPNG） ----
+const FM={};
+(function(){
+ ['grass_block_top#g|grass_top#g','grass_block_side#s','dirt','stone','oak_log|log_oak','oak_log_top|log_oak_top','oak_leaves#l|leaves_oak#l','sand','oak_planks|planks_oak','cobblestone','bricks|brick','bedrock','coal_ore','iron_ore','gold_ore','diamond_ore','gravel','sandstone|sandstone_normal','glass','obsidian','white_wool|wool_colored_white','red_wool|wool_colored_red','blue_wool|wool_colored_blue','glowstone','stone_bricks|stonebrick','water_still#w','lava_still'].forEach((f,t)=>FM[t]=f);
+ const ent=(jp,a,b,c)=>{const id=nmid(jp);if(!id||!BT[id])return;const q=BT[id];FM[q[0]]=a;FM[q[1]]=b||a;FM[q[2]]=c||a};
+ `安山岩 andesite
+磨かれた安山岩 polished_andesite
+閃緑岩 diorite
+磨かれた閃緑岩 polished_diorite
+花こう岩 granite
+磨かれた花こう岩 polished_granite
+深層岩 deepslate_top,deepslate
+深層岩の丸石 cobbled_deepslate
+磨かれた深層岩 polished_deepslate
+深層岩レンガ deepslate_bricks
+凝灰岩 tuff
+方解石 calcite
+鍾乳石 dripstone_block
+滑らかな玄武岩 smooth_basalt
+ブラックストーン blackstone_top,blackstone
+磨かれたブラックストーン polished_blackstone
+磨かれたブラックストーンレンガ polished_blackstone_bricks
+ネザーラック netherrack
+ソウルサンド soul_sand
+ネザーレンガ nether_bricks
+赤いネザーレンガ red_nether_bricks
+クォーツブロック quartz_block_top,quartz_block_side,quartz_block_bottom
+マグマブロック magma
+ネザーウォートブロック nether_wart_block
+歪んだウォートブロック warped_wart_block
+真紅の板材 crimson_planks
+歪んだ板材 warped_planks
+真紅の幹 crimson_stem_top,crimson_stem
+歪んだ幹 warped_stem_top,warped_stem
+エンドストーン end_stone
+エンドストーンレンガ end_stone_bricks
+プルプァブロック purpur_block
+泣く黒曜石 crying_obsidian
+赤い砂 red_sand
+赤い砂岩 red_sandstone_top,red_sandstone
+滑らかな砂岩 sandstone_top
+きめ細かい砂岩 cut_sandstone
+滑らかな赤い砂岩 red_sandstone_top
+粘土 clay
+泥 mud
+泥レンガ mud_bricks
+固めた泥 packed_mud
+苔ブロック moss_block
+雪ブロック snow
+氷 ice
+氷塊 packed_ice
+青氷 blue_ice
+ポドゾル podzol_top,podzol_side,dirt
+菌糸 mycelium_top,mycelium_side,dirt
+粗い土 coarse_dirt
+根付いた土 rooted_dirt
+苔むした石レンガ mossy_stone_bricks
+ひび割れた石レンガ cracked_stone_bricks
+模様入り石レンガ chiseled_stone_bricks
+苔むした丸石 mossy_cobblestone
+プリズマリン prismarine
+プリズマリンレンガ prismarine_bricks
+ダークプリズマリン dark_prismarine
+シーランタン sea_lantern
+鉄ブロック iron_block
+金ブロック gold_block
+ダイヤモンドブロック diamond_block
+エメラルドブロック emerald_block
+ネザライトブロック netherite_block
+銅ブロック copper_block
+風化した銅ブロック exposed_copper
+錆びた銅ブロック weathered_copper
+酸化した銅ブロック oxidized_copper
+切り込み入り銅 cut_copper
+ラピスラズリブロック lapis_block
+レッドストーンブロック redstone_block
+石炭ブロック coal_block
+アメジストブロック amethyst_block
+鉄の原石ブロック raw_iron_block
+金の原石ブロック raw_gold_block
+銅の原石ブロック raw_copper_block
+ラピスラズリ鉱石 lapis_ore
+レッドストーン鉱石 redstone_ore
+エメラルド鉱石 emerald_ore
+銅鉱石 copper_ore
+深層岩の石炭鉱石 deepslate_coal_ore
+深層岩の鉄鉱石 deepslate_iron_ore
+深層岩の金鉱石 deepslate_gold_ore
+深層岩のダイヤモンド鉱石 deepslate_diamond_ore
+深層岩のレッドストーン鉱石 deepslate_redstone_ore
+深層岩のラピスラズリ鉱石 deepslate_lapis_ore
+深層岩のエメラルド鉱石 deepslate_emerald_ore
+深層岩の銅鉱石 deepslate_copper_ore
+ネザーの金鉱石 nether_gold_ore
+ネザークォーツ鉱石 nether_quartz_ore
+古代の残骸 ancient_debris_top,ancient_debris_side
+竹の板材 bamboo_planks
+竹ブロック bamboo_block_top,bamboo_block
+テラコッタ terracotta
+本棚 oak_planks,bookshelf
+TNT tnt_top,tnt_side,tnt_bottom
+カボチャ pumpkin_top,pumpkin_side
+スイカ melon_top,melon_side
+干し草の俵 hay_block_top,hay_block_side
+作業台 crafting_table_top,crafting_table_front,oak_planks
+かまど furnace_top,furnace_front,furnace_top
+スポンジ sponge
+骨ブロック bone_block_top,bone_block_side
+スライムブロック slime_block
+ハチミツブロック honey_block_top,honey_block_side,honey_block_bottom
+サボテン cactus_top,cactus_side,cactus_bottom
+シュルームライト shroomlight
+レッドストーンランプ redstone_lamp
+レッドストーンダスト redstone_dust_dot
+レッドストーントーチ redstone_torch
+リピーター repeater
+レバー lever
+石のボタン stone
+石の感圧板 stone
+ピストン piston_top,piston_side,piston_bottom
+粘着ピストン piston_top_sticky,piston_side,piston_bottom
+オブザーバー observer_top,observer_side,observer_back
+ディスペンサー furnace_top,dispenser_front
+コンパレーター comparator
+ドロッパー furnace_top,dropper_front
+ホッパー hopper_top,hopper_outside
+ターゲット target_top,target_side
+レール rail
+パワードレール powered_rail
+検知レール detector_rail
+アクティベーターレール activator_rail`.split('\n').forEach(l=>{const[jp,f]=l.trim().split(' ');if(jp)ent(jp,...f.split(','))});
+ [['トウヒ','spruce','p'],['シラカバ','birch','b'],['ジャングル','jungle','l'],['アカシア','acacia','l'],['ダークオーク','dark_oak','l'],['マングローブ','mangrove','l'],['サクラ','cherry','']].forEach(([j,e,t])=>{ent(j+'の板材',e+'_planks');ent(j+'の原木',e+'_log_top',e+'_log');ent(j+'の葉',e+'_leaves'+(t?'#'+t:''))});
+ [['白','white'],['橙','orange'],['赤紫','magenta'],['空色','light_blue'],['黄','yellow'],['黄緑','lime'],['桃','pink'],['灰','gray'],['薄灰','light_gray'],['青緑','cyan'],['紫','purple'],['青','blue'],['茶','brown'],['緑','green'],['赤','red'],['黒','black']].forEach(([j,e])=>{ent(j+'色の羊毛',e+'_wool');ent(j+'色のコンクリート',e+'_concrete');ent(j+'色のテラコッタ',e+'_terracotta');ent(j+'色の色付きガラス',e+'_stained_glass')});
+ [['オーク','oak'],['トウヒ','spruce'],['シラカバ','birch'],['ジャングル','jungle'],['アカシア','acacia'],['ダークオーク','dark_oak'],['マングローブ','mangrove'],['サクラ','cherry'],['竹','bamboo'],['真紅','crimson'],['歪んだ','warped'],['鉄','iron']].forEach(([j,e])=>ent(j+'のトラップドア',e+'_trapdoor'));
+})();
+const TINT={g:[145,189,89],l:[119,171,47],p:[97,153,97],b:[128,167,85],w:[63,118,228]},PK='minicraft_pack';
+const FILES=new Set(['grass_block_side_overlay']);Object.values(FM).forEach(s=>s.split('|').forEach(x=>FILES.add(x.split('#')[0])));
+async function readZip(buf){const dv=new DataView(buf),u8=new Uint8Array(buf);let e=u8.length-22;while(e>=0&&dv.getUint32(e,true)!==0x06054b50)e--;if(e<0)throw new Error('zip');
+ const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const out=new Map();
+ for(let i=0;i<n;i++){if(dv.getUint32(p,true)!==0x02014b50)break;
+  const meth=dv.getUint16(p+10,true),csz=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true),name=new TextDecoder().decode(u8.subarray(p+46,p+46+nl));p+=46+nl+xl+cl;
+  const m=name.match(/textures\/block\/([^\/]+)\.png$/i);if(!m)continue;
+  const st=lo+30+dv.getUint16(lo+26,true)+dv.getUint16(lo+28,true),raw=u8.subarray(st,st+csz);let data=raw;
+  if(meth===8)data=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());else if(meth!==0)continue;
+  out.set(m[1].toLowerCase(),data)}
+ return out}
+function tintCanvas(cv,t){const c=cv.getContext('2d'),d=c.getImageData(0,0,cv.width,cv.height),a=d.data;for(let i=0;i<a.length;i+=4){a[i]=a[i]*t[0]/255;a[i+1]=a[i+1]*t[1]/255;a[i+2]=a[i+2]*t[2]/255}c.putImageData(d,0,0)}
+function refreshAtlas(){tex.dispose();tex.needsUpdate=true;atlasStyle.textContent=`.ic{background-image:url(${ac.toDataURL()});image-rendering:pixelated}`}
+async function applyPack(map){
+ const bm={};for(const[k,v]of map){if(!FILES.has(k))continue;try{bm[k]=await createImageBitmap(new Blob([v],{type:'image/png'}))}catch(e){}}
+ const hits=[];for(let t=0;t<N;t++){const sp=FM[t];if(!sp)continue;for(const nm of sp.split('|')){const[f,fl]=nm.split('#');if(bm[f]){hits.push([t,bm[f],fl||'',f]);break}}}
+ if(!hits.length)return 0;
+ let T=16;hits.forEach(h=>T=Math.max(T,Math.min(128,Math.min(h[1].width,h[1].height))));
+ const base=document.createElement('canvas');base.width=16*CO;base.height=16*RW;base.getContext('2d').putImageData(im,0,0);
+ ac.width=T*CO;ac.height=T*RW;const g=ac.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(base,0,0,ac.width,ac.height);
+ const tc=document.createElement('canvas');tc.width=tc.height=T;const x2=tc.getContext('2d');
+ const draw=(b,fl)=>{const sw=Math.min(b.width,b.height);x2.clearRect(0,0,T,T);x2.imageSmoothingEnabled=false;x2.drawImage(b,0,0,sw,sw,0,0,T,T);if(TINT[fl])tintCanvas(tc,TINT[fl])};
+ for(const[t,b,fl,f]of hits){const cx=(t%CO)*T,cy=Math.floor(t/CO)*T;if(f.includes('glass'))g.clearRect(cx,cy,T,T);
+  draw(b,fl==='s'?'':fl);g.drawImage(tc,cx,cy);
+  if(fl==='s'&&bm.grass_block_side_overlay){draw(bm.grass_block_side_overlay,'g');g.drawImage(tc,cx,cy)}}
+ refreshAtlas();
+ try{localStorage.setItem(PK,JSON.stringify({n:N,d:ac.toDataURL('image/png')}))}catch(e){toast('※容量の都合で、次回起動時は標準テクスチャに戻ります')}
+ return hits.length}
+async function packFiles(files){toast('テクスチャパックを読み込み中…');const map=new Map();
+ try{for(const f of files){const n=f.name.toLowerCase();if(n.endsWith('.zip'))(await readZip(await f.arrayBuffer())).forEach((v,k)=>map.set(k,v));else if(n.endsWith('.png'))map.set(n.replace(/\.png$/,''),new Uint8Array(await f.arrayBuffer()))}}
+ catch(e){return toast('読み込みに失敗しました（zipが壊れているか未対応の形式です）')}
+ const c=await applyPack(map);toast(c?c+'種類のテクスチャを適用しました':'対応するブロックテクスチャが見つかりません（assets/minecraft/textures/block/ のPNGが必要です）')}
+function resetPack(){try{localStorage.removeItem(PK)}catch(e){}ac.width=16*CO;ac.height=16*RW;ac.getContext('2d').putImageData(im,0,0);refreshAtlas();toast('標準テクスチャに戻しました')}
+try{const sp=JSON.parse(localStorage.getItem(PK)||'null');if(sp&&sp.n===N){const i2=new Image();i2.onload=()=>{ac.width=i2.width;ac.height=i2.height;const g=ac.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(i2,0,0);refreshAtlas()};i2.src=sp.d}}catch(e){}
+{const fi=Object.assign(document.createElement('input'),{type:'file',accept:'.zip,.png,image/png,application/zip',multiple:true});fi.style.display='none';document.body.appendChild(fi);
+ fi.onchange=()=>{if(fi.files.length)packFiles([...fi.files]);fi.value=''};
+ const mk=(t,fn,st)=>{const b=document.createElement('button');b.type='button';b.textContent=t;if(st)b.style.cssText=st;b.onclick=e=>{e.stopPropagation();fn()};return b};
+ if(resetWorldBtn&&resetWorldBtn.parentNode){resetWorldBtn.parentNode.insertBefore(mk('🎨 テクスチャパックを読み込む',()=>fi.click()),resetWorldBtn);resetWorldBtn.parentNode.insertBefore(mk('標準テクスチャに戻す',resetPack),resetWorldBtn)}
+ const w=document.createElement('div');w.style.cssText='margin-top:12px;font-size:12px';w.append(mk('🎨 テクスチャパックを読み込む',()=>fi.click(),'margin:2px'),mk('標準に戻す',resetPack,'margin:2px'),Object.assign(document.createElement('div'),{textContent:'Java版リソースパック(.zip)・ブロックPNG対応／画面へのドラッグ&ドロップも可',style:'margin-top:4px;opacity:.8'}));msg.appendChild(w);
+ addEventListener('dragover',e=>e.preventDefault());addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer&&e.dataTransfer.files.length)packFiles([...e.dataTransfer.files])})}
+// ---- 設定：視野角（標準75°・±50）と感度（標準100%・±50） ----
+const FOV_DEF=75,FOV_MIN=25,FOV_MAX=125,SENS_DEF=100,SENS_MIN=50,SENS_MAX=150,SETK='minicraft_settings';
+let sensMul=1;
+const cfg={fov:FOV_DEF,sens:SENS_DEF,bright:100,sprintFov:true};
+try{const j=JSON.parse(localStorage.getItem(SETK)||'null');if(j){cfg.fov=Math.max(FOV_MIN,Math.min(FOV_MAX,+j.fov||FOV_DEF));cfg.sens=Math.max(SENS_MIN,Math.min(SENS_MAX,+j.sens||SENS_DEF));cfg.bright=Math.max(50,Math.min(150,+j.bright||100));cfg.sprintFov=j.sprintFov!==false}}catch(e){}
+function applyCfg(){cam.fov=cfg.fov;cam.updateProjectionMatrix();sensMul=cfg.sens/100;brightMul=cfg.bright/100;try{localStorage.setItem(SETK,JSON.stringify(cfg))}catch(e){}}
+{const box=document.querySelector('#pauseMenu .pauseBox'),before=document.getElementById('resumeBtn');
+ if(box&&before){const p=document.createElement('div');p.id='settingsPanel';p.style.cssText='margin:10px 0;padding:8px 12px;background:rgba(0,0,0,.28);border-radius:6px;text-align:left;font-size:13px';
+  const row=(label,key,min,max,def,unit)=>{const w=document.createElement('div');w.style.cssText='margin:6px 0';
+   const t=document.createElement('div');t.style.cssText='display:flex;justify-content:space-between;gap:10px;margin-bottom:2px';
+   const l=document.createElement('span'),v=document.createElement('b');t.append(l,v);
+   const r=document.createElement('input');r.type='range';r.id='rng_'+key;r.min=min;r.max=max;r.step=1;r.value=cfg[key];r.style.cssText='width:100%';
+   const show=()=>{l.textContent=label+'（標準 '+def+unit+'　範囲 '+min+'〜'+max+unit+'）';v.textContent=cfg[key]+unit};
+   r.addEventListener('input',()=>{cfg[key]=+r.value;show();applyCfg()});
+   const rs=document.createElement('button');rs.type='button';rs.textContent='標準に戻す';rs.style.cssText='margin-top:3px;padding:3px 8px;font-size:12px';
+   rs.onclick=e=>{e.stopPropagation();cfg[key]=def;r.value=def;show();applyCfg()};
+   w.append(t,r,rs);show();return w};
+  p.append(row('視野角','fov',FOV_MIN,FOV_MAX,FOV_DEF,'°'),row('感度','sens',SENS_MIN,SENS_MAX,SENS_DEF,'%'),row('明るさ','bright',50,150,100,'%'));
+  {const cb=document.createElement('label');cb.style.cssText='display:flex;align-items:center;gap:6px;margin:8px 0 2px;font-size:13px;cursor:pointer';
+   const ci=document.createElement('input');ci.type='checkbox';ci.id='chk_sprintfov';ci.checked=cfg.sprintFov;ci.onchange=()=>{cfg.sprintFov=ci.checked;applyCfg()};
+   cb.append(ci,document.createTextNode('ダッシュ中は視野角を広げる（+12°）'));p.append(cb)}
+  box.insertBefore(p,before)}}
+applyCfg();
+</script></body></html>
