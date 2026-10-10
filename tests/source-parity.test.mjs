@@ -9,7 +9,7 @@ const css = readFileSync('src/styles/game.css', 'utf8');
 const scripts = [...entry.matchAll(/<script src="\.\/(src\/js\/[^"]+)"\s*><\/script>/g)].map(m => m[1]);
 
 test('the new entrypoint includes all ordered classic script parts', () => {
-  assert.equal(scripts.length, 11);
+  assert.equal(scripts.length, 14);
   assert.equal(scripts[0], 'src/js/01-block-registry.js');
   assert.equal(scripts.at(-1), 'src/js/11-settings.js');
   assert.ok(entry.indexOf('three.min.js') < entry.indexOf(scripts[0]));

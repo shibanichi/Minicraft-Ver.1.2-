@@ -1,7 +1,7 @@
 name: Structural parity
 on:
   push:
-    branches: [develop]
+    branches: [develop, 'feature/**']
   pull_request:
 jobs:
   structural-parity:
