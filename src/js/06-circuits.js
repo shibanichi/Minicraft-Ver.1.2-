@@ -10,7 +10,7 @@ delete invCount[22]; blockLightDirty=true;
 if(loaded){try{scanRS()}catch(e){console.warn('scanRS',e)}}else{respawn();give(4,12);give(8,24);give(I.stick,12);give(I.iron,8);give(I.diamond,4);give(I.redstone,16);give(1,16);give(3,16);give(I.shield,1)}
 function applyChanges(ch){const sc=new Set();
  for(const[x,y,z,v]of ch){const cx=x>>4,cz=z>>4,c=getC(cx,cz);if(!c||y<0||y>=H)continue;const lx=x&15,lz=z&15,i=idx(lx,y,lz),old=c.d[i];if(old===v)continue;
-  c.d[i]=v;if(v&&y+1>c.top)c.top=y+1;let e=edits.get(ck(cx,cz));if(!e)edits.set(ck(cx,cz),e=new Map());e.set(i,v);rsReg(x,y,z,old,v);fluidDirty(x,y,z,old,v);sc.add(c);
+  c.d[i]=v;blockLightDirty=true;if(typeof isLightSource==='function'&&(isLightSource(old)||isLightSource(v))){for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++)lightMeshDirty.add(ck(cx+dx,cz+dz))}if(v&&y+1>c.top)c.top=y+1;let e=edits.get(ck(cx,cz));if(!e)edits.set(ck(cx,cz),e=new Map());e.set(i,v);rsReg(x,y,z,old,v);fluidDirty(x,y,z,old,v);sc.add(c);
   if(lx==0)sc.add(getC(cx-1,cz));if(lx==15)sc.add(getC(cx+1,cz));if(lz==0)sc.add(getC(cx,cz-1));if(lz==15)sc.add(getC(cx,cz+1))}
  sc.forEach(c=>{if(c&&c.v)mesh(c)})}
 const contAt=(x,y,z)=>{const bs=getB(x,y,z)&255;if(!CONTB.has(bs))return null;const k=rk(x,y,z);return chests[k]||(chests[k]=Array(CONTB.get(bs)).fill(null))};
