@@ -228,10 +228,10 @@ function setB(x,y,z,b){const cx=x>>4,cz=z>>4,c=getC(cx,cz);if(!c||y<0||y>=H)retu
  let e=edits.get(ck(cx,cz));if(!e)edits.set(ck(cx,cz),e=new Map());e.set(i,b);
  mesh(c);const nn=(a,q)=>{const o=C.get(ck(a,q));if(o&&o.v)mesh(o)};
  if(lx==0)nn(cx-1,cz);if(lx==15)nn(cx+1,cz);if(lz==0)nn(cx,cz-1);if(lz==15)nn(cx,cz+1)}
-let queue=[],lcx=1e9,lcz=1e9;
+let queue=[],lcx=1e9,lcz=1e9,lastStreamRD=RD;
 function stream(force){
  const pcx=Math.floor(P.x)>>4,pcz=Math.floor(P.z)>>4;
- if(pcx!=lcx||pcz!=lcz){lcx=pcx;lcz=pcz;queue=[];
+ if(pcx!=lcx||pcz!=lcz||RD!==lastStreamRD){lcx=pcx;lcz=pcz;lastStreamRD=RD;queue=[];
   for(let dz=-RD;dz<=RD;dz++)for(let dx=-RD;dx<=RD;dx++){const d2=dx*dx+dz*dz;if(d2>RD*RD+RD)continue;
    const c=C.get(ck(pcx+dx,pcz+dz));if(!c||!c.v)queue.push([d2,pcx+dx,pcz+dz])}
   queue.sort((a,b)=>a[0]-b[0]);
