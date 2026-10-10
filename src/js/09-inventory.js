@@ -1,6 +1,6 @@
 // ---- 改良版インベントリUI ----
 const invBody=document.getElementById('invBody'), invTabs=document.getElementById('invTabs');
-let invPage='all', craftSlots=[null,null,null,null];
+let invPage='all', craftSlots=Array.isArray(pendingCraftSlots)?Array.from({length:4},(_,i)=>Number.isInteger(pendingCraftSlots[i])&&pendingCraftSlots[i]>0?pendingCraftSlots[i]:null):[null,null,null,null];
 const INV_CATS=[['all','すべて'],['building','建材系'],['circuit','回路系'],['func','機能系'],['food','食料系'],['transport','輸送系'],['combat','戦闘・防御系'],['other','その他'],['inventory','インベントリ'],['world','ワールド']];
 const CIRCUIT=new Set([RED_DUST,RED_TORCH,REPEATER,LEVER,STONE_BUTTON,PRESSURE,PISTON,STICKY_PISTON,OBSERVER,DISPENSER,COMPARATOR,DROPPER,HOPPER,RED_LAMP,TARGET,nmid('レッドストーンブロック'),nmid('TNT'),I.redstone]),FUNC=new Set([CHEST,nmid('作業台'),nmid('かまど'),nmid('本棚'),I.bucket,I.waterBucket,I.lavaBucket,nmid('スポンジ')]);
 function itemCategory(id){
