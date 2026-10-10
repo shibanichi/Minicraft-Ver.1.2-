@@ -81,10 +81,10 @@ function toggleInv(){inv=!inv;invEl.style.display=inv?'flex':'none';
 setSel(sel);
 if(typeof refreshSaveInfo==='function')refreshSaveInfo();
 // ---- input ----
-const keys={};addEventListener('keydown',e=>{keys[e.code]=1;if(e.code=='Escape'&&!e.repeat&&gameStarted){e.preventDefault();inv=false;invEl.style.display='none';chestKey=null;chestUI.style.display='none';save(false);pauseMenuOpen=true;pauseMenu.style.display='flex';pauseMenu.setAttribute('aria-hidden','false');if(document.pointerLockElement)document.exitPointerLock();return;}if(e.code>='Digit1'&&e.code<='Digit9')setSel(+e.code[5]-1);
+const keys={};addEventListener('keydown',e=>{if(pauseMenuOpen){if(e.code==='Escape')e.preventDefault();return}keys[e.code]=1;if(e.code=='Escape'&&!e.repeat&&gameStarted){e.preventDefault();inv=false;invEl.style.display='none';chestKey=null;chestUI.style.display='none';save(false);pauseMenuOpen=true;Object.keys(keys).forEach(k=>keys[k]=0);foodRightHeld=false;clearTimeout(foodEatTimer);leftBreakHeld=false;clearInterval(leftBreakTimer);rightPlaceHeld=false;clearInterval(rightPlaceTimer);drag=false;pauseMenu.style.display='flex';pauseMenu.setAttribute('aria-hidden','false');if(document.pointerLockElement)document.exitPointerLock();return;}if(e.code>='Digit1'&&e.code<='Digit9')setSel(+e.code[5]-1);
  if(e.code=='KeyE'&&!e.repeat&&msg.style.display=='none'&&!pauseMenuOpen)toggleInv();if(e.code=='KeyC'&&!e.repeat&&msg.style.display=='none'){if(!inv)toggleInv();invPage='inventory'}if(e.code=='KeyP'&&!e.repeat)save(true);if(e.code=='KeyQ'&&!e.repeat&&!inv&&msg.style.display=='none')dropSelected();if(e.code=='Space'){e.preventDefault();if(!e.repeat){const tn=performance.now();if(tn-lastSp<300&&msg.style.display=='none'&&!inv){flying=!flying;P.vy=0;toast(flying?'飛行モード ON（Space:上昇 / Shift:下降）':'飛行モード OFF')}lastSp=tn}}});
 addEventListener('keyup',e=>keys[e.code]=0);
-addEventListener('wheel',e=>{if(!inv)setSel(sel+(e.deltaY>0?1:-1))});
+addEventListener('wheel',e=>{if(!inv&&!pauseMenuOpen)setSel(sel+(e.deltaY>0?1:-1))});
 const msg=document.getElementById('msg');let locked=false,fallback=false,drag=false;
 
 
@@ -109,7 +109,7 @@ if(startBtn){
 const closeGuide=document.getElementById('closeGuide');if(closeGuide)closeGuide.addEventListener('click',()=>{document.getElementById('startGuide').style.display='none';try{cv.requestPointerLock()}catch(e){}});
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cv;if(gameStarted&&!locked&&!fallback&&!inv)msg.style.display='none'});
 document.addEventListener('pointerlockerror',()=>{fallback=true;});
-addEventListener('mousemove',e=>{if(locked||(fallback&&drag)){P.yaw-=e.movementX*.0015*sensMul;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0015*sensMul))}});
+addEventListener('mousemove',e=>{if(!pauseMenuOpen&&(locked||(fallback&&drag))){P.yaw-=e.movementX*.0015*sensMul;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0015*sensMul))}});
 addEventListener('contextmenu',e=>e.preventDefault());
 function hit(x,y,z,r=R,h=HT){const jy=Math.floor(y);
  for(let i=Math.floor(x-r);i<=Math.floor(x+r);i++)for(let j=jy-1;j<=Math.floor(y+h);j++)for(let k=Math.floor(z-r);k<=Math.floor(z+r);k++){
@@ -133,7 +133,7 @@ function ray(){const dir=rdir.set(0,0,-1).applyEuler(cam.rotation),o=cam.positio
   if(!prev||prev[0]!=x||prev[1]!=y||prev[2]!=z)prev=[x,y,z]}return null}
 let foodRightHeld=false,foodEatTimer=0;
 addEventListener('mousedown',e=>{
- if(msg.style.display!='none'||document.getElementById('startGuide')?.style.display==='flex'||inv||(e.target.closest&&e.target.closest('#bar')))return;drag=true;if(!(locked||fallback))return;
+ if(pauseMenuOpen||msg.style.display!='none'||document.getElementById('startGuide')?.style.display==='flex'||inv||(e.target.closest&&e.target.closest('#bar')))return;drag=true;if(!(locked||fallback))return;
  if(e.button==0){const mh=pickMob();if(mh&&(!target||mh.t<target.t)){attack(mh.m);return}}
  if(e.button==2){const hid=hot[sel];if(isItem(hid)&&ITEMS[hid]?.type==='food'){e.preventDefault();if((invCount[hid]||0)>0){foodRightHeld=true;clearTimeout(foodEatTimer);foodEatTimer=setTimeout(function eatHeldFood(){if(!foodRightHeld)return;const before=invCount[hid]||0;equip(hid);if(foodRightHeld&&(invCount[hid]||0)>0&&((hp<20)||(hunger<10)))foodEatTimer=setTimeout(eatHeldFood,1000);else foodRightHeld=false},1000)}return}if(hid===I.bucket||hid===I.waterBucket||hid===I.lavaBucket){bucketUse(hid);return}}
  if(!target)return;const{x,y,z,prev,hy}=target;
@@ -152,10 +152,10 @@ addEventListener('mouseup',()=>{foodRightHeld=false;clearTimeout(foodEatTimer);f
 // 左ボタン長押し中は、狙っているブロックの破壊操作を一定間隔で繰り返す
 let leftBreakHeld=false,leftBreakTimer=0;
 addEventListener('mousedown',e=>{
- if(e.button!==0||msg.style.display!=='none'||inv||!(locked||fallback)||(e.target.closest&&e.target.closest('#bar')))return;
+ if(pauseMenuOpen||e.button!==0||msg.style.display!=='none'||inv||!(locked||fallback)||(e.target.closest&&e.target.closest('#bar')))return;
  leftBreakHeld=true;clearInterval(leftBreakTimer);
  leftBreakTimer=setInterval(()=>{
-  if(!leftBreakHeld||msg.style.display!=='none'||inv||!(locked||fallback)||!target)return;
+  if(pauseMenuOpen||!leftBreakHeld||msg.style.display!=='none'||inv||!(locked||fallback)||!target)return;
   const mh=pickMob();if(mh&&(!target||mh.t<target.t))return;
   const ev=new MouseEvent('mousedown',{button:0,bubbles:true,cancelable:true});dispatchEvent(ev);
  },180);
@@ -163,11 +163,11 @@ addEventListener('mousedown',e=>{
 // 右ボタン長押し中は、通常ブロックへの設置操作だけを一定間隔で繰り返す
 let rightPlaceHeld=false,rightPlaceTimer=0;
 addEventListener('mousedown',e=>{
- if(e.button!==2||msg.style.display!=='none'||document.getElementById('startGuide')?.style.display==='flex'||inv||!(locked||fallback))return;
+ if(pauseMenuOpen||e.button!==2||msg.style.display!=='none'||document.getElementById('startGuide')?.style.display==='flex'||inv||!(locked||fallback))return;
  const selectedId=hot[sel];if(isItem(selectedId)&&ITEMS[selectedId]?.type==='food')return;
  rightPlaceHeld=true;clearInterval(rightPlaceTimer);
  rightPlaceTimer=setInterval(()=>{
-  if(!rightPlaceHeld||msg.style.display!=='none'||inv||!(locked||fallback)||!target)return;
+  if(pauseMenuOpen||!rightPlaceHeld||msg.style.display!=='none'||inv||!(locked||fallback)||!target)return;
   const tv=getB(target.x,target.y,target.z)&255;
   if(CONTB.has(tv)||tv===LEVER||tv===STONE_BUTTON||tv===PRESSURE||tv===RED_DUST||tv===REPEATER||tv===COMPARATOR||tv===OBSERVER||tv===DISPENSER||tv===DROPPER)return;
   const ev=new MouseEvent('mousedown',{button:2,bubbles:true,cancelable:true});dispatchEvent(ev);
