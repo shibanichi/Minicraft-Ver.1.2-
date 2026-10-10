@@ -14,7 +14,7 @@ test('paused frame renders but never advances simulation (#1)', () => {
   ctx.loop(1337);
   assert.equal(ctx.last,1337);
   assert.equal(rendered,1);
-  assert.equal(scheduled,1);
+  assert.equal(scheduled,2,'initial animation registration plus paused frame');
   assert.equal(ctx.fr,undefined,'gameplay update should be bypassed');
 });
 test('paused input cannot manipulate world or continue held actions (#1)',()=>{
