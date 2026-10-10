@@ -1,4 +1,4 @@
-# Minicraft — 開発用構造（fork）
+# Minicraft — 開発用構造
  
 [オリジナル](https://github.com/shibanichi/Minicraft-Ver.1.2-) は生成AIを用いて開発されたMinecraft風ゲームです。
 
@@ -8,6 +8,18 @@
 - 例: `python3 -m http.server 8000` → `http://localhost:8000/`
 - Three.js r128 はCDNから読み込むため、起動時にインターネット接続が必要です。
 - `ミニクラフト_Ver1.5.html` と、それ以前のHTMLは元の単一ファイル版の履歴スナップショットとして変更せず保持します。
+
+## 公開方法（フォーク元のGitHub Pages）
+
+将来的な公開先はフォーク元の [shibanichi/Minicraft-Ver.1.2-](https://github.com/shibanichi/Minicraft-Ver.1.2-) です。**フォーク側でのGitHub Pages公開は想定していません。**
+
+- **最新版（現在Ver1.5）の入口はルートの `index.html`** とし、ページを開くだけでゲームが始められる構成です。従来のHTMLダウンロードは不要になります。
+- `index.html` は `src/styles/game.css` および `src/js/` に依存するため、フォーク元へ反映する際はこれらを**まとめて**取り込んでください。
+- フォーク元の管理者が変更を取り込んだ後、リポジトリの **Settings → Pages → Build and deployment** で `Deploy from a branch`、公開ブランチ `main`、ディレクトリ `/(root)` を指定すれば、そのブランチの `index.html` がトップページになります。
+- 公開予定URL: https://shibanichi.github.io/Minicraft-Ver.1.2-/ （GitHub Pagesの有効化・デプロイ完了後）。
+- 今後のバージョンアップ時も新たなバージョン別HTMLを公開入口にせず、**`index.html` と `src/` を最新版として更新**する方針です。旧版HTMLは履歴として残します。
+
+**現在の状況**: フォーク元の `main` にはまだ `index.html` がありません。現段階ではフォークの `develop` にのみ公開用の構造があり、フォーク元への取り込みやPR作成は行っていません。
 
 ## ソース構成
 
