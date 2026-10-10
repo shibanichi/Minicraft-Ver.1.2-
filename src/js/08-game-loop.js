@@ -11,6 +11,7 @@ function crouchHasSupport(x,y,z){const yy=Math.floor(y-.08),r=.27;return [[x-r,z
 
 for(const[dx,dz]of[[0,0],[1,0],[-1,0],[0,1],[0,-1]]){const c=getC((Math.floor(P.x)>>4)+dx,(Math.floor(P.z)>>4)+dz);if(c&&!c.v)mesh(c)}
 function loop(now){
+ if(pauseMenuOpen){last=now;ren.render(scene,cam);requestAnimationFrame(loop);return}
  const dt=Math.min(.05,(now-last)/1000);last=now;fps+=(1/Math.max(dt,.001)-fps)*.05;
  const f=inv?0:(keys.KeyW?1:0)-(keys.KeyS?1:0),s=inv?0:(keys.KeyD?1:0)-(keys.KeyA?1:0);
  const sn=Math.sin(P.yaw),cs=Math.cos(P.yaw),ix=Math.floor(P.x),iz=Math.floor(P.z);
