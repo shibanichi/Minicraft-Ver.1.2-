@@ -20,11 +20,11 @@ test('root entrypoint is directly publishable by GitHub Pages', () => {
 });
 
 test('all local scripts and styles exist and use Pages-safe relative URLs', () => {
-  assert.equal(localScripts.length, 12, 'Three.js CDN followed by 11 local game sections');
+  assert.equal(localScripts.length, 15, 'Three.js CDN followed by 14 local game sections');
   assert.equal(localStyles.length, 1);
   assert.match(localScripts[0], /^https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/three\.js\//);
   const actualLocalScripts = localScripts.slice(1);
-  assert.equal(new Set(actualLocalScripts).size, 11);
+  assert.equal(new Set(actualLocalScripts).size, 14);
   assert.ok(actualLocalScripts.every(src => src.startsWith('./src/js/')));
   assert.deepEqual(actualLocalScripts, readdirSync(join(root, 'src/js'))
     .filter(name => name.endsWith('.js')).sort().map(name => './src/js/' + name));

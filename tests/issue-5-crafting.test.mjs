@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { test } from 'node:test';
 
 test('items placed in 2x2 crafting slots persist across a reload (#5)', () => {
- const src=readFileSync('src/js/04-player-ui.js','utf8');
+ const src=readFileSync('src/js/04-0-player-ui.js','utf8');
  const inv=readFileSync('src/js/09-inventory.js','utf8');
  const funcs=src.slice(src.indexOf('function save(man){'),src.indexOf('// ワールド読込は'));
  const decl=inv.split('\n').find(line=>line.includes("let invPage='all'"));

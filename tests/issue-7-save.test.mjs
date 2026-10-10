@@ -4,7 +4,7 @@ import { runInNewContext } from 'node:vm';
 import { test } from 'node:test';
 
 test('HP and world time survive save/load, including legacy fallback (#7)', () => {
- const src = readFileSync('src/js/04-player-ui.js','utf8');
+ const src = readFileSync('src/js/04-0-player-ui.js','utf8');
  const code = src.slice(src.indexOf('function save(man){'),src.indexOf('// ワールド読込は'));
  assert.ok(code.startsWith('function save(man){'));
  const state = new Map();

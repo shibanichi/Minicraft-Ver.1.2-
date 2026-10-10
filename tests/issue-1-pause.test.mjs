@@ -18,7 +18,7 @@ test('paused frame renders but never advances simulation (#1)', () => {
   assert.equal(ctx.fr,undefined,'gameplay update should be bypassed');
 });
 test('paused input cannot manipulate world or continue held actions (#1)',()=>{
-  const src=readFileSync('src/js/04-player-ui.js','utf8');
+  const src=readFileSync('src/js/04-1-input.js','utf8');
   assert.match(src,/keydown',e=>\{if\(pauseMenuOpen\)/);
   assert.match(src,/mousedown',e=>\{\s*if\(pauseMenuOpen\|\|/);
   assert.match(src,/if\(pauseMenuOpen\|\|e\.button!==0/);
