@@ -113,7 +113,7 @@ function updateDayNight(dt){
  worldClock=(worldClock+dt)%TOTAL_CYCLE;
  const phase=worldClock/TOTAL_CYCLE;
  const day=phase<.5;
- const half=day?phase/.5:0;
+ const half=day?phase/.5:(phase-.5)/.5;
  // 昼：太陽は東(+X)から西(-X)。夜：月も東(+X)から西(-X)。
  const a=half*Math.PI;
  const sx=Math.cos(a)*SUN_DIST, sy=Math.sin(a)*SUN_DIST+18;
