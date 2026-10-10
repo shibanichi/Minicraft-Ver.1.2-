@@ -34,4 +34,4 @@
 
 ## 未解決課題
 
-フォークのGitHub Issuesが無効なため、コードレビュー指摘は一時的に `docs/review-backlog.md` に記録しています。Issuesを有効化した後、個別Issueに移行する必要があります。
+レビュー指摘は [GitHub Issues](https://github.com/surumeneco/Minicraft-Ver.1.2-/issues) に10件登録されています。対応状況とソースの対応表は `docs/review-backlog.md` を参照してください。
