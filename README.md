@@ -1,6 +1,6 @@
-# Minicraft — 開発用構造
- 
-[オリジナル](https://github.com/shibanichi/Minicraft-Ver.1.2-) は生成AIを用いて開発されたMinecraft風ゲームです。
+# ミニクラフト (Minicraft)
+
+生成AIを用いて開発されたMinecraft風ブラウザゲームです。最新版はルートの `index.html` を入口として公開できます。
 
 ## 起動方法
 
@@ -9,17 +9,24 @@
 - Three.js r128 はCDNから読み込むため、起動時にインターネット接続が必要です。
 - `ミニクラフト_Ver1.5.html` と、それ以前のHTMLは元の単一ファイル版の履歴スナップショットとして変更せず保持します。
 
-## 公開方法（フォーク元のGitHub Pages）
+## GitHub Pagesで公開する
 
-将来的な公開先はフォーク元の [shibanichi/Minicraft-Ver.1.2-](https://github.com/shibanichi/Minicraft-Ver.1.2-) です。**フォーク側でのGitHub Pages公開は想定していません。**
+このリポジトリは**ビルドや専用サーバーなし**で公開できます。最新版のVer1.5を起動する `index.html` と、その依存ファイル `src/` はリポジトリのルートに配置済みです。
 
-- **最新版（現在Ver1.5）の入口はルートの `index.html`** とし、ページを開くだけでゲームが始められる構成です。従来のHTMLダウンロードは不要になります。
-- `index.html` は `src/styles/game.css` および `src/js/` に依存するため、フォーク元へ反映する際はこれらを**まとめて**取り込んでください。
-- フォーク元の管理者が変更を取り込んだ後、リポジトリの **Settings → Pages → Build and deployment** で `Deploy from a branch`、公開ブランチ `main`、ディレクトリ `/(root)` を指定すれば、そのブランチの `index.html` がトップページになります。
-- 公開予定URL: https://shibanichi.github.io/Minicraft-Ver.1.2-/ （GitHub Pagesの有効化・デプロイ完了後）。
-- 今後のバージョンアップ時も新たなバージョン別HTMLを公開入口にせず、**`index.html` と `src/` を最新版として更新**する方針です。旧版HTMLは履歴として残します。
+リポジトリ管理者が変更を `main` に取り込んだ後、次の手順だけで公開できます。
 
-**現在の状況**: フォーク元の `main` にはまだ `index.html` がありません。現段階ではフォークの `develop` にのみ公開用の構造があり、フォーク元への取り込みやPR作成は行っていません。
+1. [Settings → Pages](https://github.com/shibanichi/Minicraft-Ver.1.2-/settings/pages) を開く。
+2. **Build and deployment → Source** で **Deploy from a branch** を選ぶ。
+3. **Branch** を `main`、**Folder** を `/(root)` にし、**Save** を押す。
+4. GitHub Pages のデプロイが成功すれば、以下のURLでゲームを開けます。
+
+**公開予定URL:** https://shibanichi.github.io/Minicraft-Ver.1.2-/
+
+> 現時点ではフォーク元でPagesは未設定です。上記URLは公開設定が完了するまでは利用できません。
+
+公開される `index.html` が常に最新版の入口です。以前のバージョン（`ミニクラフト_Ver*.html`）は比較用として残してあります。今後の更新では新バージョンのコードを `index.html` と `src/` に反映してください。
+
+`.nojekyll` により、GitHub Pagesからそのまま静的ファイルを配信します。アセットは相対パスで参照しているため、リポジトリ名が含まれるPagesのサブパスでも読み込めます。GitHub Actionsによる自動デプロイの追加設定は必要ありません。
 
 ## ソース構成
 
@@ -42,7 +49,7 @@
 
 `node --test tests/*.test.mjs`
 
-依存パッケージなしで、元HTMLと分割後のソースの完全一致、読み込み順、個々のJavaScriptファイルの構文を確認します。これはブラウザでの動作検証を代替しません。
+依存パッケージなしで、元HTMLと分割後のソースの完全一致、読み込み順、個々のJavaScriptファイルの構文、およびPages公開時のローカルアセット参照と配置を確認します。これはWebGLを含むブラウザ動作検証を代替しません。
 
 ## 未解決課題
 
