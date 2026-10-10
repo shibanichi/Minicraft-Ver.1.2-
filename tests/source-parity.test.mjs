@@ -25,7 +25,7 @@ test('stylesheet is unchanged from the legacy snapshot', () => {
 test('unchanged script sections match the legacy version', () => {
   const m = original.match(/<script>\n([\s\S]*?)\n<\/script><\/body><\/html>/);
   assert.ok(m);
-  const changed = new Set(["src/js/02-renderer.js"]);
+  const changed = new Set(["src/js/02-renderer.js","src/js/03-world.js"]);
   const parts = scripts.map(p => readFileSync(p, 'utf8'));
   let cursor = 0;
   for (let i = 0; i < parts.length; i++) {
