@@ -74,12 +74,14 @@ function addMob(type,x,y,z){const T=MT[type],g=new THREE.Group(),legs=T.b(g);sce
 function rmMob(m){scene.remove(m.g);mobs.splice(mobs.indexOf(m),1)}
 function updateHp(){const e=document.getElementById('hp');if(!e)return;const h=Math.max(0,Math.min(10,Math.ceil(hp/2)));e.innerHTML='<span class="hearts" aria-label="HP">'+Array.from({length:10},(_,i)=>'<span class="'+(i<h?'':'empty')+'">'+(i<h?'♥':'♡')+'</span>').join('')+'</span><span class="meats" aria-label="満腹度">'+Array.from({length:10},(_,i)=>'<span class="'+(i<hunger?'':'empty')+'">🍖</span>').join('')+'</span>'}
 function hurt(d){const ar=[equipped.helmet,equipped.chest,equipped.legs,equipped.boots].filter(Boolean).reduce((a,id)=>a+ITEMS[id].damage,0);d=Math.max(1,Math.round(d*(1-Math.min(.7,ar/40))));hp-=d;if(hp<=0){toast('やられた！ リスポーンします');respawn();for(const m of mobs.slice())if(m.T.host)rmMob(m)}updateHp()}
-function explode(m){const cx=Math.floor(m.x),cy=Math.floor(m.y+.5),cz=Math.floor(m.z),ch=new Set();
+function explode(m){const cx=Math.floor(m.x),cy=Math.floor(m.y+.5),cz=Math.floor(m.z),ch=[];
  for(let dx=-3;dx<=3;dx++)for(let dy=-3;dy<=3;dy++)for(let dz=-3;dz<=3;dz++){if(dx*dx+dy*dy+dz*dz>10)continue;
   const x=cx+dx,y=cy+dy,z=cz+dz;if(y<1||y>=H)continue;const v=getB(x,y,z);if(!v||v==10||FL[v&255])continue;
-  const c=getC(x>>4,z>>4);if(!c)continue;const i=idx(x&15,y,z&15),k=ck(x>>4,z>>4);c.d[i]=0;
-  let e=edits.get(k);if(!e)edits.set(k,e=new Map());e.set(i,0);ch.add(c)}
- const all=new Set();ch.forEach(c=>{for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const o=C.get(ck(c.cx+a,c.cz+b));if(o&&o.v)all.add(o)}});all.forEach(c=>mesh(c));
+  // Explosion destruction must follow the same container/drop contract as TNT.
+  if(CONTB.has(v&255)){const key=x+','+y+','+z,inv=chests[key];
+   if(inv){for(const slot of inv)if(slot)spawnDrop(slot[0],slot[1],x+.5,y+.5,z+.5);delete chests[key]}}
+  ch.push([x,y,z,0])}
+ applyChanges(ch);
  const d=Math.hypot(P.x-m.x,P.y-m.y,P.z-m.z);if(d<6){let dmg=Math.round((6-d)*3);if(shieldUp&&shieldFaces(m.x,m.z)){dmg=Math.round(dmg*.2);shieldFlash=.25}if(dmg>0)hurt(dmg)}rmMob(m)}
 function stepMob(m,dt){const T=m.T,dx=P.x-m.x,dz=P.z-m.z,dist=Math.hypot(dx,dz);let mv=0;m.t+=dt;
  if(T.host&&dist<20&&Math.abs(P.y-m.y)<8){m.yaw=Math.atan2(dx,dz);mv=T.sp;
