@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ミニクラフト</title>
+<link rel="stylesheet" href="./src/styles/game.css"></head><body>
+<canvas id="c"></canvas><div id="cross"></div><div id="bar"></div>
+<div id="inv"><div class="box"><h2>インベントリ</h2><div id="invTabs" class="invTabs"></div><div id="invBody" class="invScroll"></div><div class="hint">Eで閉じる　｜　アイテム/ブロックをクリックすると使用・装備・ホットバー登録　｜　数字キーでホットバー選択</div></div></div><div id="chestUI"><div class="box"><h2>チェスト</h2><div id="chestBody" class="invScroll"></div><div class="hint">クリック:スタックごと移動　右クリック:1個ずつ移動　E / Esc:閉じる</div></div></div><div id="pauseMenu" aria-hidden="true"><div class="pauseBox"><h2>ゲームメニュー</h2><div class="pauseSave">Escを押したのでワールドをセーブしました</div><button id="resumeBtn" type="button">ゲームに戻る</button><button id="settingsBtn" type="button">設定</button><button id="resetWorldBtn" type="button">ワールドを初期化</button></div></div>
+<div id="startGuide" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.68);z-index:70;align-items:center;justify-content:center;color:#fff"><div style="width:min(620px,90vw);max-height:85vh;overflow:auto;background:#555;border:3px solid #222;padding:20px;box-sizing:border-box;border-radius:6px"><h2 style="margin-top:0">ワールド開始ガイド</h2><p><b>食べ方：</b>食料をホットバーで選び、右クリックを1秒間長押しすると食べます。長押しを続けると、1秒ごとに食べます。</p><table style="width:100%;border-collapse:collapse;background:#444"><tr><th style="text-align:left;padding:5px;border-bottom:1px solid #999">食べ物</th><th style="padding:5px;border-bottom:1px solid #999">HP回復</th><th style="padding:5px;border-bottom:1px solid #999">満腹度回復</th></tr><tr><td style="padding:5px">🍎 リンゴ</td><td style="text-align:center">4</td><td style="text-align:center">2</td></tr><tr><td style="padding:5px">🍞 パン</td><td style="text-align:center">5</td><td style="text-align:center">2</td></tr><tr><td style="padding:5px">🥩 生の牛肉</td><td style="text-align:center">3</td><td style="text-align:center">2</td></tr><tr><td style="padding:5px">🥩 生の豚肉</td><td style="text-align:center">3</td><td style="text-align:center">2</td></tr><tr><td style="padding:5px">🍖 生の羊肉</td><td style="text-align:center">3</td><td style="text-align:center">2</td></tr><tr><td style="padding:5px">🍗 生の鶏肉</td><td style="text-align:center">2</td><td style="text-align:center">2</td></tr><tr><td style="padding:5px">🟫 腐った肉</td><td style="text-align:center">2</td><td style="text-align:center">2</td></tr></table><p>HPは最大20、満腹度は最大10です。HPまたは満腹度が減っているときに食べられます。</p><p><b>盾：</b>盾を装備している状態でShiftキーを押すと盾を構えます。</p><button id="closeGuide" style="display:block;margin:16px auto 0;padding:9px 24px;font-weight:bold">ゲームを始める</button></div></div><div id="uwOverlay"></div><div id="hud"></div><div id="hp"></div><div id="toast"></div>
+<div id="msg"><h1>ミニクラフト</h1><div>16000×16000の無限風ワールド</div><button id="startBtn" type="button">ゲームスタート</button><div id="saveInfo" style="margin-top:12px;max-width:min(760px,82vw);max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:8px 12px;border-radius:6px;font-size:12px;text-align:left"></div><div style="margin-top:14px">W:前進　A:左　S:後退　D:右　W+R:ダッシュ　Space:ジャンプ　Spaceダブルタップ:飛行<br>Shift:しゃがむ（飛行中:下降）　E:インベントリ　Q:アイテムを落とす　P:セーブ<br>左クリック:攻撃/ブロック破壊　右クリック:ブロック設置　1〜9:ホットバー　マウス移動:視点<br>しゃがみ中はブロックの端から落ちません　（ポインターロック不可の環境ではドラッグで視点）</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="./src/js/01-block-registry.js"></script>
+<script src="./src/js/02-renderer.js"></script>
+<script src="./src/js/03-world.js"></script>
+<script src="./src/js/04-0-player-ui.js"></script>
+<script src="./src/js/04-1-input.js"></script>
+<script src="./src/js/04-2-containers.js"></script>
+<script src="./src/js/04-3-dropped-items.js"></script>
+<script src="./src/js/05-entities.js"></script>
+<script src="./src/js/06-circuits.js"></script>
+<script src="./src/js/07-fluids.js"></script>
+<script src="./src/js/08-game-loop.js"></script>
+<script src="./src/js/09-inventory.js"></script>
+<script src="./src/js/10-resource-packs.js"></script>
+<script src="./src/js/11-settings.js"></script></body></html>
