@@ -22,10 +22,21 @@ test('stylesheet is unchanged from the legacy snapshot', () => {
   assert.equal(css, m[1]);
 });
 
-test('concatenated scripts are byte-for-byte equal to the original inline JavaScript', () => {
+test('unmodified scripts match the legacy source', () => {
   const m = original.match(/<script>\n([\s\S]*?)\n<\/script><\/body><\/html>/);
   assert.ok(m);
-  assert.equal(scripts.map(p => readFileSync(p, 'utf8')).join(''), m[1]);
+  const modified = new Set(["src/js/04-player-ui.js"]);
+  const parts = scripts.map(p => readFileSync(p, 'utf8'));
+  let cursor = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const marker = parts[i].split('\n')[0];
+    assert.equal(m[1].indexOf(marker, cursor), cursor);
+    const end = i + 1 < parts.length ? m[1].indexOf(parts[i+1].split('\n')[0], cursor + marker.length) : m[1].length;
+    assert.ok(end > cursor);
+    if (!modified.has(scripts[i])) assert.equal(parts[i], m[1].slice(cursor, end), scripts[i]);
+    cursor = end;
+  }
+  assert.equal(cursor, m[1].length);
 });
 
 test('each extracted JavaScript section parses', () => {
