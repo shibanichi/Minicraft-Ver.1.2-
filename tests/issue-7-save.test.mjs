@@ -12,7 +12,7 @@ test('HP and world time survive save/load, including legacy fallback (#7)', () =
   SK:'minicraft_v2', localStorage:{getItem:k=>state.get(k)||null,setItem:(k,v)=>state.set(k,v)},
   noSave:false, edits:new Map(), chests:{}, RS:new Map(), invCount:{},
   equipped:{}, hot:[1,2,3,4,5,6,7,8,9], sel:0, hunger:7,hungerTimer:12,
-  hp:6,worldClock:950,TOTAL_CYCLE:1200,
+  hp:6,worldClock:950,TOTAL_CYCLE:1200,craftSlots:[null,null,null,null],pendingCraftSlots:null,
   P:{x:1,y:40,z:2,yaw:0,pitch:0},
   refreshSaveInfo:()=>{},toast:()=>{},Number,Math,JSON,Map,Object
  };

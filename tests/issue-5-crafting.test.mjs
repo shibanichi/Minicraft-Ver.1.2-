@@ -13,7 +13,7 @@ test('items placed in 2x2 crafting slots persist across a reload (#5)', () => {
  const sandbox={localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},
    SK:'minicraft_v2',noSave:false,edits:new Map(),chests:{},P:{x:0,y:30,z:0,yaw:0,pitch:0},
    hot:[1,2,3,4,5,6,7,8,9],sel:0,invCount:{1001:2},equipped:{},
-   hunger:10,hungerTimer:0,refreshSaveInfo:()=>{},toast:()=>{},pendingCraftSlots:null,
+   hunger:10,hungerTimer:0,hp:20,worldClock:0,TOTAL_CYCLE:1200,refreshSaveInfo:()=>{},toast:()=>{},pendingCraftSlots:null,
    Math,JSON,Map,Object
  };
  vm.createContext(sandbox);
