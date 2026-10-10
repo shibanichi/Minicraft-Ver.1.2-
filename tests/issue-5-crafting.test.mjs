@@ -25,6 +25,6 @@ test('items placed in 2x2 crafting slots persist across a reload (#5)', () => {
  assert.equal(sandbox.load(),true);
  vm.runInContext(decl.replace("let invPage=","invPage="),sandbox);
  const restored=vm.runInContext("Array.from(craftSlots)",sandbox);
- assert.deepEqual(restored,[1001,null,1001,null]);
+ assert.deepEqual(JSON.parse(JSON.stringify(restored)),[1001,null,1001,null]);
  assert.equal(sandbox.invCount[1001],2);
 });
