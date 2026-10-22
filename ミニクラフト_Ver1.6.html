@@ -1218,6 +1218,43 @@ socket.onmessage = (event) => {
                     scene.add(group);
                     playerMeshes[id] = group;
                     toast("プレイヤーが参加しました！");
+                    
+                //他のプレイヤーの座標を更新している処理（socket.onmessage 内の for (let id in remotePlayers) のループの最後）に、以下のコードを追記します。
+                // 【追記】手足を動かすための時間を計算（毎フレーム少しずつ増やす）
+                if (!playerMeshes[id].animTime) playerMeshes[id].animTime = 0;
+                playerMeshes[id].animTime += 0.15; // この数値を大きくすると動きが速くなります
+
+                // 1. 各パーツのメッシュ（立体）をグループ内から引っ張り出す
+                const head     = playerMeshes[id].children[0];
+                const body     = playerMeshes[id].children[1];
+                const rightArm = playerMeshes[id].children[2];
+                const leftArm  = playerMeshes[id].children[3];
+                const rightLeg = playerMeshes[id].children[4];
+                const leftLeg  = playerMeshes[id].children[5];
+
+                // 2. 他のプレイヤーが「動いているか」を判定
+                // 今回届いた座標（pData）と、現在のモデルの座標が離れているか計算
+                const dx = pData.x - playerMeshes[id].position.x;
+                const dz = pData.z - playerMeshes[id].position.z;
+                const isMoving = (dx * dx + dz * dz) > 0.001; // わずかでも動いていたらtrue
+
+                if (isMoving) {
+                    // 移動中：手足を前後に交互に振る（Math.sinを使用）
+                    const angle = Math.sin(playerMeshes[id].animTime) * 0.6; // 0.6は振りの大きさ
+                    
+                    rightArm.rotation.x =  angle; // 右手を前に振るとき
+                    leftArm.rotation.x  = -angle; // 左手は後ろに振る
+                    rightLeg.rotation.x = -angle; // 右足は後ろ（腕と逆方向）
+                    leftLeg.rotation.x  =  angle; // 左足は前
+                } else {
+                    // 立ち止まっている時：手足の回転を綺麗にリセットして直立不動にする
+                    rightArm.rotation.x = 0;
+                    leftArm.rotation.x  = 0;
+                    rightLeg.rotation.x = 0;
+                    leftLeg.rotation.x  = 0;
+                }
+
+
                 }
 
                 // 届いた座標を組み立てたモデル全体に反映（足元を地面に合わせるため y+0.9 で調整）
